@@ -56,3 +56,24 @@ export async function insertRowsToTable(tableName: string, rows: any[]) {
     return { data: null, error: err };
   }
 }
+
+export async function updateRowInTable(tableName: string, rowId: number, updatedData: any) {
+  try {
+    const { data, error } = await supabase
+      .from(tableName)
+      .update(updatedData)
+      .eq('id', rowId)
+      .select();
+
+    if (error) {
+      console.error('Error updating row:', error);
+      return { data: null, error };
+    }
+
+    console.log(`Successfully updated row with id ${rowId}`);
+    return { data, error: null };
+  } catch (err) {
+    console.error('Unexpected error:', err);
+    return { data: null, error: err };
+  }
+}
