@@ -11,7 +11,10 @@ import {
     TableContainer,
     TableCell,
     TableHead,
-    TableRow
+    TableRow,
+    Menu,
+    MenuItem,
+    IconButton
 } from '@mui/material';
 import { MoreVert } from '@mui/icons-material';
 
@@ -97,74 +100,114 @@ export default function AdvertiserHome({ mode, handleModeChange }: AdvertiseHome
 }
 
 const tableRowBodyStyle = {
-    borderBottom: '0.25px solid #e0e0e0', 
-    color: '#fff', 
-    paddingTop: '1px', 
-    paddingBottom: '1px',
+    borderBottom: '0.25px solid #e0e0e0',
+    color: '#fff',
+    paddingTop: '5px',
+    paddingBottom: '5px',
     fontSize: '13px',
     verticalAlign: 'middle',
-    maxWidth: '50px'
 }
 
 const tableRowHeaderStyle = {
-    borderBottom: '1px solid #e0e0e0', 
-    color: '#fff', 
-    paddingTop: '1px', 
-    paddingBottom: '1px', 
+    borderBottom: '0.5px solid #e0e0e0',
+    color: '#fff',
+    paddingTop: '5px',
+    paddingBottom: '5px',
     backgroundColor: '#252626',
-    maxWidth: '50px'
 }
-
 function CampaignTable({ campaigns }: CampaignTableParams) {
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const open = Boolean(anchorEl);
+
+    const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleClose = () => {
+        setAnchorEl(null);
+    };
+
     return (
-        <TableContainer component={Paper} sx={{ flex: 1, backgroundColor: 'transparent' }}>
-            <Table size="small" stickyHeader>
-                <TableHead>
-                    <TableRow>
-                        <TableCell sx={tableRowHeaderStyle}>Treatment Name</TableCell>
-                        <TableCell sx={[tableRowHeaderStyle, { textAlign: 'center' }]}>Status</TableCell>
-                        <TableCell sx={[tableRowHeaderStyle, { textAlign: 'center' }]}>Impressions</TableCell>
-                        <TableCell sx={[tableRowHeaderStyle, { textAlign: 'center' }]}>Clicks</TableCell>
-                        <TableCell sx={[tableRowHeaderStyle, { textAlign: 'center' }]}>Clickthrough Rate</TableCell>
-                        <TableCell sx={tableRowHeaderStyle}>Description</TableCell>
-                        <TableCell sx={tableRowHeaderStyle}></TableCell>
-                    </TableRow>
-                </TableHead>
-                <TableBody>
-                    {campaigns.map((campaign) => (
-                    <TableRow
-                        key={campaign.id}
-                        sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-                    >
-                        <TableCell sx={tableRowBodyStyle}>
-                            {campaign.treatment_name.length > 10 ? String(campaign.treatment_name.substring(0, 10)) + "..." : campaign.treatment_name }
-                        </TableCell>
-                        <TableCell sx={[tableRowBodyStyle, { textAlign: 'center' }]}>
-                            {campaign.active ? (
-                                <p style={{ fontWeight: 'strong', marginTop: '5px', marginBottom: '5px', padding: '2.5px', backgroundColor: '#67e077', color: '#022907', borderRadius: '5px' }}>Active</p>
-                            ) : (
-                                <p style={{ fontWeight: 'strong', marginTop: '5px', marginBottom: '5px', padding: '2.5px', backgroundColor: '#d6857a', color: '#6b1206', borderRadius: '5px' }}>Paused</p>
-                            )}
-                        </TableCell>
-                        <TableCell sx={[tableRowBodyStyle, { textAlign: 'center' }]}>
-                            {campaign.impressions_count}
-                        </TableCell>
-                        <TableCell sx={[tableRowBodyStyle, { textAlign: 'center' }]}>
-                            {campaign.clicks_count}
-                        </TableCell>
-                        <TableCell sx={[tableRowBodyStyle, { textAlign: 'center' }]}>
-                            {campaign.impressions_count ? String(campaign.clicks_count / campaign.impressions_count * 100) + "%" : String(campaign.impressions_count) + "%"}
-                        </TableCell>
-                        <TableCell sx={tableRowBodyStyle}>
-                            {campaign.description.length > 50 ? campaign.description.substring(0, 50) + "..." : campaign.description}
-                        </TableCell>
-                        <TableCell sx={[tableRowBodyStyle, { textAlign: 'right' }]}>
-                            <MoreVert sx={{ color: 'white', fontSize: '20px', cursor: 'pointer' }} />
-                        </TableCell>
-                    </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
-        </TableContainer>
+            <TableContainer 
+                component={Paper} 
+                sx={{ 
+                    flex: 1, 
+                    backgroundColor: 'transparent',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '10px',
+                    margin: '20px auto',
+                    maxWidth: 'lg'
+                }}
+            >
+                <Table size="small" stickyHeader>
+                    <TableHead>
+                        <TableRow>
+                            <TableCell sx={tableRowHeaderStyle}>Treatment Name</TableCell>
+                            <TableCell sx={[tableRowHeaderStyle, { textAlign: 'center' }]}>Status</TableCell>
+                            <TableCell sx={[tableRowHeaderStyle, { textAlign: 'center' }]}>Impressions</TableCell>
+                            <TableCell sx={[tableRowHeaderStyle, { textAlign: 'center' }]}>Clicks</TableCell>
+                            <TableCell sx={[tableRowHeaderStyle, { textAlign: 'center' }]}>Clickthrough Rate</TableCell>
+                            <TableCell sx={tableRowHeaderStyle}>Description</TableCell>
+                            <TableCell sx={tableRowHeaderStyle}></TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {campaigns.map((campaign) => (
+                        <TableRow
+                            key={campaign.id}
+                            sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                        >
+                            <TableCell sx={tableRowBodyStyle}>
+                                {campaign.treatment_name.length > 10 ? String(campaign.treatment_name.substring(0, 10)) + "..." : campaign.treatment_name }
+                            </TableCell>
+                            <TableCell sx={[tableRowBodyStyle, { textAlign: 'center' }]}>
+                                {campaign.active ? (
+                                    <p style={{ fontWeight: 'strong', marginTop: '5px', marginBottom: '5px', padding: '2.5px', backgroundColor: '#67e077', color: '#022907', borderRadius: '5px' }}>Active</p>
+                                ) : (
+                                    <p style={{ fontWeight: 'strong', marginTop: '5px', marginBottom: '5px', padding: '2.5px', backgroundColor: '#d6857a', color: '#6b1206', borderRadius: '5px' }}>Paused</p>
+                                )}
+                            </TableCell>
+                            <TableCell sx={[tableRowBodyStyle, { textAlign: 'center' }]}>
+                                {campaign.impressions_count}
+                            </TableCell>
+                            <TableCell sx={[tableRowBodyStyle, { textAlign: 'center' }]}>
+                                {campaign.clicks_count}
+                            </TableCell>
+                            <TableCell sx={[tableRowBodyStyle, { textAlign: 'center' }]}>
+                                {campaign.impressions_count ? String(campaign.clicks_count / campaign.impressions_count * 100) + "%" : String(campaign.impressions_count) + "%"}
+                            </TableCell>
+                            <TableCell sx={tableRowBodyStyle}>
+                                {campaign.description.length > 50 ? campaign.description.substring(0, 50) + "..." : campaign.description}
+                            </TableCell>
+                            <TableCell sx={[tableRowBodyStyle, { textAlign: 'right' }]}>
+                                <IconButton onClick={handleClick}>
+                                    <MoreVert
+                                        sx={{ 
+                                            color: 'white',
+                                            cursor: 'pointer',
+                                            fontSize: '12px'
+                                        }}
+                                    />
+                                </IconButton>
+                            </TableCell>
+                        </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+                <Menu
+                    id="basic-menu"
+                    anchorEl={anchorEl}
+                    open={open}
+                    onClose={handleClose}
+                    MenuListProps={{
+                        'aria-labelledby': 'basic-button',
+                    }}
+                    style={{
+                        padding: '1px'
+                    }}
+                >
+                    <MenuItem onClick={handleClose}>Edit</MenuItem>
+                </Menu>
+            </TableContainer>
     )
 }
