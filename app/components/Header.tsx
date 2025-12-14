@@ -9,7 +9,7 @@ import {
   SelectChangeEvent
 } from '@mui/material';
 import { styled } from '@mui/system';
-import { ADVERTISER_MODE, PHYSICIAN_MODE } from '../constants';
+import { ADVERTISERS, ADVERTISER_MODE, PHYSICIAN_MODE } from '../constants';
 
 const StyledBox = styled(Box)({
   display: 'flex',
@@ -37,19 +37,32 @@ const StyledButton = styled(Button)({
 
 interface HeaderProps {
   mode: string;
-  handleNewMode: (event: SelectChangeEvent) => void;
+  handleModeChange: (event: SelectChangeEvent) => void;
   handleNewConversation: () => void;
   showNewChatButton: boolean;
+  activeAdvertiser?: Advertiser | null;
+  setActiveAdvertiser?: (advertiser: Advertiser) => void;
 }
 
-export default function Header({ mode, handleNewMode, handleNewConversation, showNewChatButton }: HeaderProps) {
-  
+interface Advertiser {
+  id: number;
+  name: string;
+}
+
+export default function Header({ 
+  mode, 
+  handleModeChange, 
+  handleNewConversation, 
+  showNewChatButton,
+  activeAdvertiser,
+  setActiveAdvertiser
+}: HeaderProps) {
   return (
     <StyledBox>
-      <FormControl style={{ marginLeft: '20px', marginTop: '10px', marginBottom: '10px' }}>
+      <FormControl style={{ marginLeft: '20px' }}>
         <Select
           value={mode}
-          onChange={handleNewMode}
+          onChange={handleModeChange}
           inputProps={{ 'aria-label': 'Without label' }}
           sx={{
             color: 'white',
@@ -95,6 +108,36 @@ export default function Header({ mode, handleNewMode, handleNewConversation, sho
         onClick={handleNewConversation}>
           New Chat
       </StyledButton>}
+      {mode == ADVERTISER_MODE && (
+        <Box style={{marginTop: '10px', marginLeft: '20px', marginBottom: '10px'}}>
+        {ADVERTISERS.map((company : Advertiser) => (
+            <Button
+                key={company.id}
+                variant={(activeAdvertiser === company) ? 'contained' : 'outlined'}
+                onClick={() => setActiveAdvertiser && setActiveAdvertiser(company)}
+                sx={{
+                    color: (activeAdvertiser === company) ? '#fff' : '#d45b15',
+                    backgroundColor: (activeAdvertiser === company) ? '#d45b15' : 'transparent',
+                    borderColor: '#d45b15',
+                    borderRadius: '20px',
+                    fontSize: '12px',
+                    paddingLeft: '5px',
+                    paddingRight: '5px',
+                    paddingTop: '2.5px',
+                    paddingBottom: '2.5px',
+                    marginRight: '10px',
+                    '&:hover': {
+                        backgroundColor: (activeAdvertiser === company) ? '#b34711' : 'rgba(212, 91, 21, 0.04)',
+                        borderColor: '#b34711',
+                    }
+                }}
+            >
+                {company.name}
+            </Button>
+        ))}
+    </Box>
+      )}
+
     </StyledBox>
   );
 }
