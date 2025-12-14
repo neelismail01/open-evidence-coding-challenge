@@ -1,14 +1,15 @@
 'use client';
 
-import { 
-  Button, 
-  Box, 
+import {
+  Button,
+  Box,
   FormControl,
-  MenuItem, 
+  MenuItem,
   Select,
   SelectChangeEvent
 } from '@mui/material';
 import { styled } from '@mui/system';
+import { useRouter, usePathname } from 'next/navigation';
 import { ADVERTISERS, ADVERTISER_MODE, PHYSICIAN_MODE } from '../constants';
 
 const StyledBox = styled(Box)({
@@ -36,8 +37,6 @@ const StyledButton = styled(Button)({
 });
 
 interface HeaderProps {
-  mode: string;
-  handleModeChange: (event: SelectChangeEvent) => void;
   handleNewConversation: () => void;
   showNewChatButton: boolean;
   activeAdvertiser?: Advertiser | null;
@@ -49,14 +48,33 @@ interface Advertiser {
   name: string;
 }
 
-export default function Header({ 
-  mode, 
-  handleModeChange, 
-  handleNewConversation, 
+export default function Header({
+  handleNewConversation,
   showNewChatButton,
   activeAdvertiser,
   setActiveAdvertiser
 }: HeaderProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const getModeFromPath = () => {
+    if (pathname.startsWith('/advertiser')) {
+      return ADVERTISER_MODE;
+    }
+    return PHYSICIAN_MODE;
+  };
+
+  const mode = getModeFromPath();
+
+  const handleModeChange = (event: SelectChangeEvent) => {
+    const newMode = event.target.value;
+    if (newMode === ADVERTISER_MODE) {
+      router.push('/advertiser');
+    } else {
+      router.push('/physician');
+    }
+  };
+
   return (
     <StyledBox>
       <FormControl style={{ marginLeft: '20px' }}>
@@ -106,36 +124,36 @@ export default function Header({
       {showNewChatButton && <StyledButton
         color="inherit"
         onClick={handleNewConversation}>
-          New Chat
+        New Chat
       </StyledButton>}
       {mode == ADVERTISER_MODE && (
-        <Box style={{marginTop: '10px', marginLeft: '20px', marginBottom: '10px'}}>
-        {ADVERTISERS.map((company : Advertiser) => (
+        <Box style={{ marginTop: '10px', marginLeft: '20px', marginBottom: '10px' }}>
+          {ADVERTISERS.map((company: Advertiser) => (
             <Button
-                key={company.id}
-                variant={(activeAdvertiser === company) ? 'contained' : 'outlined'}
-                onClick={() => setActiveAdvertiser && setActiveAdvertiser(company)}
-                sx={{
-                    color: (activeAdvertiser === company) ? '#fff' : '#d45b15',
-                    backgroundColor: (activeAdvertiser === company) ? '#d45b15' : 'transparent',
-                    borderColor: '#d45b15',
-                    borderRadius: '20px',
-                    fontSize: '12px',
-                    paddingLeft: '5px',
-                    paddingRight: '5px',
-                    paddingTop: '2.5px',
-                    paddingBottom: '2.5px',
-                    marginRight: '10px',
-                    '&:hover': {
-                        backgroundColor: (activeAdvertiser === company) ? '#b34711' : 'rgba(212, 91, 21, 0.04)',
-                        borderColor: '#b34711',
-                    }
-                }}
+              key={company.id}
+              variant={(activeAdvertiser === company) ? 'contained' : 'outlined'}
+              onClick={() => setActiveAdvertiser && setActiveAdvertiser(company)}
+              sx={{
+                color: (activeAdvertiser === company) ? '#fff' : '#d45b15',
+                backgroundColor: (activeAdvertiser === company) ? '#d45b15' : 'transparent',
+                borderColor: '#d45b15',
+                borderRadius: '20px',
+                fontSize: '12px',
+                paddingLeft: '5px',
+                paddingRight: '5px',
+                paddingTop: '2.5px',
+                paddingBottom: '2.5px',
+                marginRight: '10px',
+                '&:hover': {
+                  backgroundColor: (activeAdvertiser === company) ? '#b34711' : 'rgba(212, 91, 21, 0.04)',
+                  borderColor: '#b34711',
+                }
+              }}
             >
-                {company.name}
+              {company.name}
             </Button>
-        ))}
-    </Box>
+          ))}
+        </Box>
       )}
 
     </StyledBox>

@@ -23,12 +23,7 @@ interface Ad {
   url: string;
 }
 
-interface PhysicianHomeParams {
-  mode: string;
-  handleModeChange: (event: SelectChangeEvent) => void;
-} 
-
-export default function PhysicianHome({ mode, handleModeChange }: PhysicianHomeParams) {
+export default function PhysicianHome() {
   const [question, setQuestion] = useState<string>('');
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [answer, setAnswer] = useState<string>('');
@@ -86,10 +81,7 @@ export default function PhysicianHome({ mode, handleModeChange }: PhysicianHomeP
     scrollToBottom();
   };
 
-  const handleModeChangeSelected = (event: SelectChangeEvent) => {
-    clearConversation();
-    handleModeChange(event);
-  }
+
 
   useEffect(() => {
     scrollToBottom();
@@ -105,8 +97,6 @@ export default function PhysicianHome({ mode, handleModeChange }: PhysicianHomeP
         }}
       >
         <Header
-          mode={mode}
-          handleModeChange={handleModeChangeSelected}
           handleNewConversation={handleNewConversation}
           showNewChatButton={true}
         />
@@ -138,8 +128,6 @@ export default function PhysicianHome({ mode, handleModeChange }: PhysicianHomeP
       }}
     >
       <Header
-        mode={mode}
-        handleModeChange={handleModeChangeSelected}
         handleNewConversation={handleNewConversation}
         showNewChatButton={false}
       />

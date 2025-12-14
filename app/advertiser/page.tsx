@@ -1,10 +1,10 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { 
     Box, 
-    SelectChangeEvent,
     Paper,
     Table,
     TableBody,
@@ -21,13 +21,14 @@ import { MoreVert } from '@mui/icons-material';
 import Header from '../components/Header';
 import { ADVERTISERS } from '../constants';
 
-interface AdvertiseHomeParams {
-    mode: string;
-    handleModeChange: (event: SelectChangeEvent) => void;
-}
-
-interface CampaignTableParams {
-    campaigns: Campaign[];
+interface Campaign {
+    id: number;
+    created_at: string;
+    treatment_name: string;
+    description: string;
+    impressions_count: number;
+    clicks_count: number;
+    active: boolean;
 }
 
 interface Advertiser {
@@ -35,18 +36,7 @@ interface Advertiser {
     name: string;
 }
 
-interface Campaign {
-    id: number;
-    created_at: string;
-    treatment_name: string;
-    description: string;
-    company_id: number;
-    impressions_count: number;
-    clicks_count: number;
-    active: Boolean;
-}
-
-export default function AdvertiserHome({ mode, handleModeChange }: AdvertiseHomeParams) {
+export default function AdvertiserHome() {
     const [activeAdvertiser, setActiveAdvertiser] = useState<Advertiser>(ADVERTISERS[0])
     const [campaignsLoading, setCampaignsLoading] = useState<Boolean>(false);
     const [campaignsForSelectedAdvertiser, setCampaignsForSelectedAdvertiser] = useState<Campaign[]>([]);
@@ -74,7 +64,7 @@ export default function AdvertiserHome({ mode, handleModeChange }: AdvertiseHome
 
     useEffect(() => {
         fetchCampaignsForAdvertiser(activeAdvertiser);
-    }, [])
+    }, [activeAdvertiser])
 
     return (
         <Box
@@ -85,8 +75,6 @@ export default function AdvertiserHome({ mode, handleModeChange }: AdvertiseHome
             }}
         >
             <Header
-                mode={mode}
-                handleModeChange={handleModeChange}
                 handleNewConversation={handleNewConversation}
                 showNewChatButton={false}
                 activeAdvertiser={activeAdvertiser}
@@ -115,16 +103,32 @@ const tableRowHeaderStyle = {
     paddingBottom: '5px',
     backgroundColor: '#252626',
 }
+
+interface CampaignTableParams {
+    campaigns: Campaign[];
+}
+
 function CampaignTable({ campaigns }: CampaignTableParams) {
+    const router = useRouter();
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const [selectedCampaign, setSelectedCampaign] = useState<null | Campaign>(null);
     const open = Boolean(anchorEl);
 
-    const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    const handleClick = (event: React.MouseEvent<HTMLButtonElement>, campaign: Campaign) => {
         setAnchorEl(event.currentTarget);
+        setSelectedCampaign(campaign);
     };
 
     const handleClose = () => {
         setAnchorEl(null);
+        setSelectedCampaign(null);
+    };
+
+    const handleEdit = () => {
+        if (selectedCampaign) {
+            router.push(`/advertiser/edit/${selectedCampaign.id}`);
+        }
+        handleClose();
     };
 
     return (
@@ -152,7 +156,7 @@ function CampaignTable({ campaigns }: CampaignTableParams) {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {campaigns.map((campaign) => (
+                        {campaigns.map((campaign: Campaign) => (
                         <TableRow
                             key={campaign.id}
                             sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
@@ -180,7 +184,7 @@ function CampaignTable({ campaigns }: CampaignTableParams) {
                                 {campaign.description.length > 50 ? campaign.description.substring(0, 50) + "..." : campaign.description}
                             </TableCell>
                             <TableCell sx={[tableRowBodyStyle, { textAlign: 'right' }]}>
-                                <IconButton onClick={handleClick}>
+                                <IconButton onClick={(e) => handleClick(e, campaign)}>
                                     <MoreVert
                                         sx={{ 
                                             color: 'white',
@@ -201,12 +205,23 @@ function CampaignTable({ campaigns }: CampaignTableParams) {
                     onClose={handleClose}
                     MenuListProps={{
                         'aria-labelledby': 'basic-button',
-                    }}
-                    style={{
-                        padding: '1px'
+                        disablePadding: true,
                     }}
                 >
-                    <MenuItem onClick={handleClose}>Edit</MenuItem>
+                    <MenuItem
+                        onClick={handleEdit}
+                        sx={{
+                            paddingY: '0px',
+                            fontSize: '13px',
+                            backgroundColor: '#252626',
+                            color: 'white',
+                            '&:hover': {
+                                backgroundColor: '#424242',
+                            }
+                        }}
+                    >
+                        Edit
+                    </MenuItem>
                 </Menu>
             </TableContainer>
     )
