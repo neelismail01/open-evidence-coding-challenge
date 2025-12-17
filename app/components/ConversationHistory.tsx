@@ -19,6 +19,7 @@ const StyledPaper = styled(Paper)({
 
 interface ConversationHistoryProps {
   history: HistoryItem[];
+  streamingContent?: string;
 }
 
 function ConversationHistoryItem({ role, content }: HistoryItem) {
@@ -42,12 +43,19 @@ function ConversationHistoryItem({ role, content }: HistoryItem) {
   )
 }
 
-export default function ConversationHistory({ history }: ConversationHistoryProps) {
+export default function ConversationHistory({ history, streamingContent }: ConversationHistoryProps) {
   return (
     <Box >
       {history.map((item, index) => (
         <ConversationHistoryItem key={index} {...item} />
       ))}
+      {streamingContent && (
+        <Box
+          component="div"
+          dangerouslySetInnerHTML={{ __html: streamingContent.replace(/\n/g, '<br />') }}
+          style={{ marginBottom: '3rem' }}
+        />
+      )}
     </Box>
   );
 }

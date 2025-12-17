@@ -1,23 +1,46 @@
-import OpenAI from 'openai';
 import { NextResponse } from 'next/server';
-
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || '',
-});
+import { getLLMResponse, getLLMResponseStream } from '@/utils/openai_manager';
 
 export async function POST(request: Request) {
-  const { question, history } = await request.json();
+  const { question, history, stream } = await request.json();
 
-  try {
-    const chatCompletion = await client.chat.completions.create({
-      messages: [
-        ...history,
-        { role: 'user', content: question }],
-      model: 'gpt-3.5-turbo',
-    });
+  if (stream) {
+    try {
+      const encoder = new TextEncoder();
 
-    return NextResponse.json({ answer: chatCompletion.choices[0].message.content });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+      const readableStream = new ReadableStream({
+        async start(controller) {
+          try {
+            for await (const chunk of getLLMResponseStream(question, history)) {
+              const data = JSON.stringify({ content: chunk });
+              controller.enqueue(encoder.encode(`data: ${data}\n\n`));
+            }
+            controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+            controller.close();
+          } catch (error: any) {
+            const errorData = JSON.stringify({ error: error.message });
+            controller.enqueue(encoder.encode(`data: ${errorData}\n\n`));
+            controller.close();
+          }
+        },
+      });
+
+      return new Response(readableStream, {
+        headers: {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+        },
+      });
+    } catch (error: any) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+  } else {
+    try {
+      const answer = await getLLMResponse(question, history);
+      return NextResponse.json({ answer });
+    } catch (error: any) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
   }
 }
