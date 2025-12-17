@@ -10,7 +10,7 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/system';
 import { useRouter, usePathname } from 'next/navigation';
-import { ADVERTISERS, ADVERTISER_MODE, PHYSICIAN_MODE } from '../constants';
+import { ADVERTISERS, ADVERTISER_MODE, PHYSICIAN_MODE } from '../../utils/constants';
 
 const StyledBox = styled(Box)({
   display: 'flex',
@@ -24,7 +24,7 @@ const StyledBox = styled(Box)({
 
 const StyledButton = styled(Button)({
   borderRadius: '10px',
-  backgroundColor: '#d45b15',
+  backgroundColor: '  ',
   border: '1px solid #d45b15',
   width: '125px',
   marginRight: '20px',

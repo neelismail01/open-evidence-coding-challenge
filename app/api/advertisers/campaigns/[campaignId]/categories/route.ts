@@ -1,0 +1,261 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { getRowsFromTable, insertRowsToTable, updateRowsInTable } from '../../../../../../utils/supabase_manager';
+import { getEmbedding } from '../../../../../../utils/openai_manager';
+import { SUPABASE_TABLE_NAME_ADVERTISING_CATEGORIES, SUPABASE_TABLE_NAME_CAMPAIGN_CATEGORIES } from '../../../../../../utils/constants'; // Corrected import path
+
+interface AdvertisingCategory {
+    id: number;
+    keyword_string: string;
+    keyword_embedding: number[];
+}
+
+interface CampaignCategory {
+    id: number;
+    created_at: string;
+    campaign_id: number;
+    advertising_category_id: number;
+    active: boolean;
+    bid: number;
+}
+
+async function getOrCreateAdvertisingCategory(
+  categoryName: string, 
+  active: boolean
+): Promise<{ advertisingCategoryId?: string; response?: NextResponse }> {
+
+  const { data: existingAdvertisingCategoriesData, error: existingAdvertisingCategoriesError } = await getRowsFromTable(SUPABASE_TABLE_NAME_ADVERTISING_CATEGORIES, {
+    filters: { keyword_string: categoryName },
+  });
+
+  if (existingAdvertisingCategoriesError) {
+    console.error('Error checking for existing advertising categories:', existingAdvertisingCategoriesError);
+    return { response: NextResponse.json({ error: 'Internal Server Error' }, { status: 500 }) };
+  }
+
+  if (existingAdvertisingCategoriesData && existingAdvertisingCategoriesData.length > 0) {
+    return { advertisingCategoryId: existingAdvertisingCategoriesData[0].id };
+  }
+
+  if (!active) {
+    // Cannot deactivate a category that doesn't exist
+    return { response: NextResponse.json({ error: 'Category does not exist to deactivate' }, { status: 404 }) };
+  }
+
+  // Create new advertising_category if it doesn't exist and active is true
+  const embedding = await getEmbedding(categoryName);
+  const { data: newAdvertisingCategoryData, error: newAdvertisingCategoryError } = await insertRowsToTable(SUPABASE_TABLE_NAME_ADVERTISING_CATEGORIES, [
+    {
+      keyword_string: categoryName,
+      keyword_embedding: embedding,
+    },
+  ]);
+
+  if (newAdvertisingCategoryError || !newAdvertisingCategoryData || newAdvertisingCategoryData.length === 0) {
+    console.error('Error creating new advertising category:', newAdvertisingCategoryError);
+    return { response: NextResponse.json({ error: 'Internal Server Error' }, { status: 500 }) };
+  }
+
+  const newAdvertisingCategory = newAdvertisingCategoryData as AdvertisingCategory[]; // Still need cast as insert returns any[]
+  return { advertisingCategoryId: newAdvertisingCategory[0].id };
+}
+
+async function insertCampaignCategoryAssociation(
+  campaignId: string,
+  advertisingCategoryId: string,
+  categoryName: string,
+  active: boolean,
+  bidAmount?: number
+): Promise<NextResponse> {
+    const { data: existingCampaignCategoriesData, error: existingCampaignCategoriesError } = await getRowsFromTable<CampaignCategory>(SUPABASE_TABLE_NAME_CAMPAIGN_CATEGORIES, {
+        filters: { campaign_id: campaignId, advertising_category_id: advertisingCategoryId },
+    });
+
+    if (existingCampaignCategoriesError) {
+        console.error('Error checking for existing campaign categories:', existingCampaignCategoriesError);
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    }
+
+    const existingCampaignCategories = existingCampaignCategoriesData; // No longer need cast, type is inferred
+
+    if (existingCampaignCategories && existingCampaignCategories.length > 0) {
+        return NextResponse.json({ error: `Category '${categoryName}' is already associated with campaign '${campaignId}'. Use PUT to update.` }, { status: 409 });
+    }
+
+    const { data: campaignCategory, error: campaignCategoryError } = await insertRowsToTable(SUPABASE_TABLE_NAME_CAMPAIGN_CATEGORIES, [
+        {
+            campaign_id: campaignId,
+            advertising_category_id: advertisingCategoryId,
+            active: active, // Use the active status provided in the POST request
+            ...(bidAmount !== undefined && { bid_amount: bidAmount }),
+        },
+    ]);
+
+    if (campaignCategoryError) {
+        console.error('Error associating category with campaign:', campaignCategoryError);
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    }
+
+    return NextResponse.json({ message: `Category '${categoryName}' added to campaign '${campaignId}'` }, { status: 201 });
+}
+
+async function updateCampaignCategoryAssociation(
+  campaignId: number,
+  advertisingCategoryId: number,
+  categoryName: string,
+  active: boolean,
+  bidAmount?: number
+): Promise<NextResponse> {
+
+  const { data: existingCampaignCategoriesData, error: existingCampaignCategoriesError } = await getRowsFromTable<CampaignCategory>(SUPABASE_TABLE_NAME_CAMPAIGN_CATEGORIES, {
+    filters: { campaign_id: campaignId, advertising_category_id: advertisingCategoryId },
+  });
+
+  if (existingCampaignCategoriesError) {
+    console.error('Error checking for existing campaign categories:', existingCampaignCategoriesError);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+
+  const campaignCategoryExists = existingCampaignCategoriesData && existingCampaignCategoriesData.length > 0;
+  const existingCampaignCategory = campaignCategoryExists ? existingCampaignCategoriesData[0] : null;
+
+  if (!campaignCategoryExists) {
+      return NextResponse.json({ error: `Category '${categoryName}' not found for campaign '${campaignId}'. Use POST to add a new category.` }, { status: 404 });
+  }
+
+  const updateData: { active?: boolean; bid_amount?: number } = {};
+  let changesMade = false;
+
+  if (existingCampaignCategory!.active !== active) {
+      updateData.active = active;
+      changesMade = true;
+  }
+  if (bidAmount !== undefined && existingCampaignCategory!.bid !== bidAmount) {
+      updateData.bid_amount = bidAmount;
+      changesMade = true;
+  }
+
+  if (!changesMade) {
+      return NextResponse.json({ message: `No changes detected for category '${categoryName}' in campaign '${campaignId}'` }, { status: 200 });
+  }
+
+  const { error: updateError } = await updateRowsInTable(
+    SUPABASE_TABLE_NAME_CAMPAIGN_CATEGORIES,
+    updateData,
+    { campaign_id: campaignId, advertising_category_id: advertisingCategoryId }
+  );
+
+  if (updateError) {
+    console.error('Error updating category for campaign:', updateError);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+
+  return NextResponse.json({ message: `Category '${categoryName}' updated for campaign '${campaignId}'` }, { status: 200 });
+}
+
+
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { campaignId: string } }
+) {
+  try {
+    const { campaignId } = params;
+    const startDate = req.nextUrl.searchParams.get('startDate');
+    const endDate = req.nextUrl.searchParams.get('endDate');
+
+    const dateRange = (startDate && endDate) ? { column: 'created_at', from: startDate, to: endDate } : undefined;
+
+    const { data: campaignCategoriesData, error: campaignCategoriesError } = await getRowsFromTable<CampaignCategory & { advertising_categories: { keyword_string: string } }>(SUPABASE_TABLE_NAME_CAMPAIGN_CATEGORIES, {
+      filters: { campaign_id: campaignId, active: true },
+      selectString: '*, advertising_categories(keyword_string)',
+      dateRange: dateRange,
+    });
+
+    if (campaignCategoriesError) {
+      console.error('Error fetching campaign categories:', campaignCategoriesError);
+      return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    }
+
+    const campaignCategories = campaignCategoriesData;
+
+    if (!campaignCategories || campaignCategories.length === 0) {
+      return NextResponse.json({ categories: [] }, { status: 200 });
+    }
+
+    return NextResponse.json({ categories: campaignCategories }, { status: 200 });
+  } catch (error) {
+    console.error('Error in GET campaign categories endpoint:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}
+
+export async function POST(
+  req: NextRequest,
+  { params }: { params: { campaignId: string } }
+) {
+  try {
+    const { campaignId } = params;
+    const body = await req.json();
+    const { categoryName, active, bidAmount } = body;
+
+    if (!categoryName) {
+      return NextResponse.json({ error: 'Category name is required' }, { status: 400 });
+    }
+    if (typeof active !== 'boolean') {
+      return NextResponse.json({ error: 'Active status (true/false) is required' }, { status: 400 });
+    }
+    if (bidAmount !== undefined && typeof bidAmount !== 'number') {
+        return NextResponse.json({ error: 'Bid amount must be a number' }, { status: 400 });
+    }
+
+    const { advertisingCategoryId, response: categoryErrorResponse } = await getOrCreateAdvertisingCategory(categoryName, active);
+
+    if (categoryErrorResponse) {
+      return categoryErrorResponse;
+    }
+    if (!advertisingCategoryId) {
+      return NextResponse.json({ error: 'Advertising category ID could not be determined.' }, { status: 500 });
+    }
+
+    return insertCampaignCategoryAssociation(campaignId, advertisingCategoryId, categoryName, active, bidAmount);
+
+  } catch (error) {
+    console.error('Error in POST category endpoint:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}
+
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: { campaignId: number } }
+) {
+  try {
+    const { campaignId } = params;
+    const body = await req.json();
+    const { categoryName, active, bidAmount } = body;
+
+    if (!categoryName) {
+      return NextResponse.json({ error: 'Category name is required' }, { status: 400 });
+    }
+    if (typeof active !== 'boolean') {
+      return NextResponse.json({ error: 'Active status (true/false) is required' }, { status: 400 });
+    }
+    if (bidAmount !== undefined && typeof bidAmount !== 'number') {
+        return NextResponse.json({ error: 'Bid amount must be a number' }, { status: 400 });
+    }
+
+    // Ensure advertising category exists (don't create if not found for PUT)
+    const { data: existingAdvertisingCategoriesData, error: existingAdvertisingCategoriesError } = await getRowsFromTable<AdvertisingCategory>(SUPABASE_TABLE_NAME_ADVERTISING_CATEGORIES, {
+      filters: { keyword_string: categoryName },
+    });
+    if (existingAdvertisingCategoriesError || !existingAdvertisingCategoriesData || existingAdvertisingCategoriesData.length === 0) {
+      return NextResponse.json({ error: `Advertising category '${categoryName}' not found.` }, { status: 404 });
+    }
+    const advertisingCategoryId = existingAdvertisingCategoriesData[0].id; // No longer need cast, type is inferred
+
+    return updateCampaignCategoryAssociation(campaignId, advertisingCategoryId, categoryName, active, bidAmount);
+
+  } catch (error) {
+    console.error('Error in PUT category endpoint:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}
