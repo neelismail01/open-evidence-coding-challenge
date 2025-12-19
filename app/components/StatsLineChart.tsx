@@ -15,6 +15,7 @@ import {
 import { Line, Bar } from 'react-chartjs-2';
 import { Box, Typography } from '@mui/material';
 import axios from 'axios';
+import { getStartAndEndDatesFromFilter } from '@/lib/utils/dateUtils';
 
 ChartJS.register(
     CategoryScale,
@@ -62,33 +63,6 @@ export default function StatsLineChart({ selectedFilter, isLoading = false, adve
     const [campaignData, setCampaignData] = useState<CampaignStats[]>([]);
     const [categoryData, setCategoryData] = useState<CategoryStats[]>([]);
     const [dataLoading, setDataLoading] = useState(false);
-
-    const getStartAndEndDatesFromFilter = (filter: string): [string | null, string | null] => {
-        const now = new Date();
-        let startDate: Date | null = null;
-        let endDate: Date | null = now;
-
-        switch (filter) {
-            case 'Last 24 Hours':
-                startDate = new Date(now.getTime() - (24 * 60 * 60 * 1000));
-                break;
-            case 'Last 7 Days':
-                startDate = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
-                break;
-            case 'Last 30 Days':
-                startDate = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
-                break;
-            case 'Last 1 Year':
-                startDate = new Date(now.getTime() - (365 * 24 * 60 * 60 * 1000));
-                break;
-            case 'All Time':
-                return [null, null];
-            default:
-                return [null, null];
-        }
-
-        return [startDate ? startDate.toISOString() : null, endDate ? endDate.toISOString() : null];
-    };
 
     const fetchStatsData = async () => {
         try {
