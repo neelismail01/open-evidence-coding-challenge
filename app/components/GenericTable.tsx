@@ -147,6 +147,7 @@ const GenericTable = forwardRef(
                                     justifyContent: column.align === 'center' ? 'center' : column.align === 'right' ? 'flex-end' : 'flex-start',
                                     gap: '4px'
                                 }}>
+                                    {sortDirection === 'asc' ? <ArrowDropUpIcon fontSize="small" /> : <ArrowDropDownIcon fontSize="small" />}
                                     {column.label}
                                     {column.tooltip && (
                                         <Tooltip
@@ -178,7 +179,6 @@ const GenericTable = forwardRef(
                                             />
                                         </Tooltip>
                                     )}
-                                    {sortDirection === 'asc' ? <ArrowDropUpIcon fontSize="small" /> : <ArrowDropDownIcon fontSize="small" />}
                                 </Box>
                             </TableCell>
                         ))}
@@ -238,7 +238,7 @@ const GenericTable = forwardRef(
                                 paddingLeft: '16px'
                             }}
                         >
-                            {isLoading ? 'Loading data...' : `${sortedData.length} records`}
+                            {isLoading ? 'Loading data...' : `${sortedData.length} ${sortedData.length == 1 ? 'record' : 'records'}`}
                         </TableCell>
                     </TableRow>
                 </TableFooter>

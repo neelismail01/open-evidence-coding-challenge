@@ -224,7 +224,7 @@ export default function AdvertiserHome() {
                             <Box sx={{
                                 width: '150px',
                                 height: '40px',
-                                bgcolor: '#525252',
+                                backgroundColor: '#1a1a1a',
                                 borderRadius: 1,
                                 margin: '0 auto',
                                 display: 'flex',
@@ -265,7 +265,7 @@ export default function AdvertiserHome() {
                             <Box sx={{
                                 width: '150px',
                                 height: '40px',
-                                bgcolor: '#525252',
+                                bgcolor: '#1a1a1a',
                                 borderRadius: 1,
                                 margin: '0 auto',
                                 display: 'flex',
@@ -306,7 +306,7 @@ export default function AdvertiserHome() {
                             <Box sx={{
                                 width: '150px',
                                 height: '40px',
-                                bgcolor: '#525252',
+                                bgcolor: '#1a1a1a',
                                 borderRadius: 1,
                                 margin: '0 auto',
                                 display: 'flex',

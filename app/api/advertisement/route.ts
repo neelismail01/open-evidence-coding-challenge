@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server';
 import { getEmbedding } from '../../../utils/openai_manager';
-import { findNearestRows, getRowsFromTable, incrementMatchesForCategory } from '../../../utils/supabase_manager';
+import { findNearestRows, incrementMatchesForCategory } from '../../../utils/supabase_manager';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.SUPABASE_URL || '';
+const supabaseKey = process.env.SUPABASE_ANON_KEY || '';
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function POST(request: Request) {
   try {
@@ -29,15 +34,15 @@ export async function POST(request: Request) {
     // Increment matches for all campaign_categories with this advertising_category_id
     await incrementMatchesForCategory(mostSimilarCategoryId);
 
-    const { data: campaignCategories, error: campaignCategoriesError } = await getRowsFromTable(
-        'campaign_categories',
-        {
-          filters: { advertising_category_id: mostSimilarCategoryId, active: true },
-          selectString: 'id, campaign_id, bid, campaigns(id, treatment_name, description, product_url, companies(name))',
-          orderBy: { column: 'bid', ascending: false },
-          limit: 1
-        }
-    );
+    // Query campaign_categories with filters on both campaign_category.active and campaigns.active
+    const { data: campaignCategories, error: campaignCategoriesError } = await supabase
+        .from('campaign_categories')
+        .select('id, campaign_id, bid, campaigns!inner(id, treatment_name, description, product_url, companies(name))')
+        .eq('advertising_category_id', mostSimilarCategoryId)
+        .eq('active', true)
+        .eq('campaigns.active', true)
+        .order('bid', { ascending: false })
+        .limit(1);
 
     if (campaignCategoriesError || !campaignCategories) {
         console.error('Error fetching campaign categories:', campaignCategoriesError);

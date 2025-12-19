@@ -49,9 +49,9 @@ interface CampaignStats {
     spend: number;
 }
 
-interface KeywordStats {
+interface CategoryStats {
     id: number;
-    keyword: string;
+    category: string;
     impressions: number;
     clicks: number;
     spend: number;
@@ -60,7 +60,7 @@ interface KeywordStats {
 export default function StatsLineChart({ selectedFilter, isLoading = false, advertiserId, campaignSpecific = false }: StatsLineChartProps) {
     const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
     const [campaignData, setCampaignData] = useState<CampaignStats[]>([]);
-    const [keywordData, setKeywordData] = useState<KeywordStats[]>([]);
+    const [categoryData, setCategoryData] = useState<CategoryStats[]>([]);
     const [dataLoading, setDataLoading] = useState(false);
 
     const getStartAndEndDatesFromFilter = (filter: string): [string | null, string | null] => {
@@ -110,7 +110,7 @@ export default function StatsLineChart({ selectedFilter, isLoading = false, adve
             const statsData = response.data.stats || {};
             const timeSeriesData = statsData.timeSeriesData || [];
             const campaignStats = statsData.campaignStats || [];
-            const keywordStats = statsData.keywordStats || [];
+            const categoryStats = statsData.categoryStats || [];
 
             console.log("StateLineCharts stats=", statsData);
 
@@ -128,13 +128,13 @@ export default function StatsLineChart({ selectedFilter, isLoading = false, adve
 
             setChartData(transformedData);
             setCampaignData(campaignStats);
-            setKeywordData(keywordStats);
+            setCategoryData(categoryStats);
         } catch (error) {
             console.error('Error fetching stats data:', error);
             // On error, use empty data
             setChartData([]);
             setCampaignData([]);
-            setKeywordData([]);
+            setCategoryData([]);
         } finally {
             setDataLoading(false);
         }
@@ -220,7 +220,7 @@ export default function StatsLineChart({ selectedFilter, isLoading = false, adve
         },
     });
 
-    // Bar chart data for top 5 campaigns by impressions
+    // Bar chart data for Top campaigns by impressions
     const top5ImpressionsData = {
         labels: campaignData
             .sort((a, b) => b.impressions - a.impressions)
@@ -240,7 +240,7 @@ export default function StatsLineChart({ selectedFilter, isLoading = false, adve
         ],
     };
 
-    // Bar chart data for top 5 campaigns by clicks
+    // Bar chart data for Top campaigns by clicks
     const top5ClicksData = {
         labels: campaignData
             .sort((a, b) => b.clicks - a.clicks)
@@ -260,19 +260,18 @@ export default function StatsLineChart({ selectedFilter, isLoading = false, adve
         ],
     };
 
-    // Bar chart data for top 5 keywords by impressions
-    const top5KeywordImpressionsData = {
-        labels: keywordData
+    const top5CategoryImpressionsData = {
+        labels: categoryData
             .sort((a, b) => b.impressions - a.impressions)
             .slice(0, 5)
-            .map(keyword => keyword.keyword.length > 15 ? keyword.keyword.substring(0, 15) + '...' : keyword.keyword),
+            .map(category => category.category.length > 15 ? category.category.substring(0, 15) + '...' : category.category),
         datasets: [
             {
                 label: 'Impressions',
-                data: keywordData
+                data: categoryData
                     .sort((a, b) => b.impressions - a.impressions)
                     .slice(0, 5)
-                    .map(keyword => keyword.impressions),
+                    .map(category => category.impressions),
                 backgroundColor: '#d45b15',
                 borderColor: '#d45b15',
                 borderWidth: 1,
@@ -280,19 +279,18 @@ export default function StatsLineChart({ selectedFilter, isLoading = false, adve
         ],
     };
 
-    // Bar chart data for top 5 keywords by clicks
-    const top5KeywordClicksData = {
-        labels: keywordData
+    const top5CategoryClicksData = {
+        labels: categoryData
             .sort((a, b) => b.clicks - a.clicks)
             .slice(0, 5)
-            .map(keyword => keyword.keyword.length > 15 ? keyword.keyword.substring(0, 15) + '...' : keyword.keyword),
+            .map(category => category.category.length > 15 ? category.category.substring(0, 15) + '...' : category.category),
         datasets: [
             {
                 label: 'Clicks',
-                data: keywordData
+                data: categoryData
                     .sort((a, b) => b.clicks - a.clicks)
                     .slice(0, 5)
-                    .map(keyword => keyword.clicks),
+                    .map(category => category.clicks),
                 backgroundColor: '#d45b15',
                 borderColor: '#d45b15',
                 borderWidth: 1,
@@ -315,7 +313,7 @@ export default function StatsLineChart({ selectedFilter, isLoading = false, adve
         ],
     };
 
-    // Bar chart data for top 5 campaigns by spend
+    // Bar chart data for Top campaigns by spend
     const top5CampaignSpendData = {
         labels: campaignData
             .sort((a, b) => b.spend - a.spend)
@@ -335,19 +333,18 @@ export default function StatsLineChart({ selectedFilter, isLoading = false, adve
         ],
     };
 
-    // Bar chart data for top 5 keywords by spend
-    const top5KeywordSpendData = {
-        labels: keywordData
+    const top5CategorySpendData = {
+        labels: categoryData
             .sort((a, b) => b.spend - a.spend)
             .slice(0, 5)
-            .map(keyword => keyword.keyword.length > 15 ? keyword.keyword.substring(0, 15) + '...' : keyword.keyword),
+            .map(category => category.category.length > 15 ? category.category.substring(0, 15) + '...' : category.category),
         datasets: [
             {
                 label: 'Spend',
-                data: keywordData
+                data: categoryData
                     .sort((a, b) => b.spend - a.spend)
                     .slice(0, 5)
-                    .map(keyword => keyword.spend),
+                    .map(category => category.spend),
                 backgroundColor: '#d45b15',
                 borderColor: '#d45b15',
                 borderWidth: 1,
@@ -420,7 +417,7 @@ export default function StatsLineChart({ selectedFilter, isLoading = false, adve
                         <Typography style={{ color: 'white' }}>Loading top campaigns by impressions...</Typography>
                     </Box>
                     <Box sx={{ ...loadingBoxStyle, flex: 1 }}>
-                        <Typography style={{ color: 'white' }}>Loading top keywords by impressions...</Typography>
+                        <Typography style={{ color: 'white' }}>Loading top categories by impressions...</Typography>
                     </Box>
                 </Box>
                 {/* Clicks charts */}
@@ -433,7 +430,7 @@ export default function StatsLineChart({ selectedFilter, isLoading = false, adve
                         <Typography style={{ color: 'white' }}>Loading top campaigns by clicks...</Typography>
                     </Box>
                     <Box sx={{ ...loadingBoxStyle, flex: 1 }}>
-                        <Typography style={{ color: 'white' }}>Loading top keywords by clicks...</Typography>
+                        <Typography style={{ color: 'white' }}>Loading top categories by clicks...</Typography>
                     </Box>
                 </Box>
                 {/* Spend charts */}
@@ -445,7 +442,7 @@ export default function StatsLineChart({ selectedFilter, isLoading = false, adve
                         <Typography style={{ color: 'white' }}>Loading top campaigns by spend...</Typography>
                     </Box>
                     <Box sx={{ ...loadingBoxStyle, flex: 1 }}>
-                        <Typography style={{ color: 'white' }}>Loading top keywords by spend...</Typography>
+                        <Typography style={{ color: 'white' }}>Loading top categories by spend...</Typography>
                     </Box>
                 </Box>
             </Box>
@@ -478,7 +475,7 @@ export default function StatsLineChart({ selectedFilter, isLoading = false, adve
                         border: '1px solid #333'
                     }}
                 >
-                    <Bar data={campaignSpecific ? top5KeywordImpressionsData : top5ImpressionsData} options={getBarChartOptions(campaignSpecific ? 'Top 5 Keywords by Impressions' : 'Top 5 Campaigns by Impressions')} />
+                    <Bar data={campaignSpecific ? top5CategoryImpressionsData : top5ImpressionsData} options={getBarChartOptions(campaignSpecific ? 'Top Categories by Impressions' : 'Top Categories by Impressions')} />
                 </Box>
                 {!campaignSpecific && (
                     <Box
@@ -491,7 +488,7 @@ export default function StatsLineChart({ selectedFilter, isLoading = false, adve
                             border: '1px solid #333'
                         }}
                     >
-                        <Bar data={top5KeywordImpressionsData} options={getBarChartOptions('Top 5 Keywords by Impressions')} />
+                        <Bar data={top5CategoryImpressionsData} options={getBarChartOptions('Top Categories by Impressions')} />
                     </Box>
                 )}
             </Box>
@@ -520,7 +517,7 @@ export default function StatsLineChart({ selectedFilter, isLoading = false, adve
                         border: '1px solid #333'
                     }}
                 >
-                    <Bar data={campaignSpecific ? top5KeywordClicksData : top5ClicksData} options={getBarChartOptions(campaignSpecific ? 'Top 5 Keywords by Clicks' : 'Top 5 Campaigns by Clicks')} />
+                    <Bar data={campaignSpecific ? top5CategoryClicksData : top5ClicksData} options={getBarChartOptions(campaignSpecific ? 'Top Categories by Clicks' : 'Top Campaigns by Clicks')} />
                 </Box>
                 {!campaignSpecific && (
                     <Box
@@ -533,7 +530,7 @@ export default function StatsLineChart({ selectedFilter, isLoading = false, adve
                             border: '1px solid #333'
                         }}
                     >
-                        <Bar data={top5KeywordClicksData} options={getBarChartOptions('Top 5 Keywords by Clicks')} />
+                        <Bar data={top5CategoryClicksData} options={getBarChartOptions('Top Categories by Clicks')} />
                     </Box>
                 )}
             </Box>
@@ -561,7 +558,7 @@ export default function StatsLineChart({ selectedFilter, isLoading = false, adve
                         border: '1px solid #333'
                     }}
                 >
-                    <Bar data={campaignSpecific ? top5KeywordSpendData : top5CampaignSpendData} options={getBarChartOptions(campaignSpecific ? 'Top 5 Keywords by Spend' : 'Top 5 Campaigns by Spend')} />
+                    <Bar data={campaignSpecific ? top5CategorySpendData : top5CampaignSpendData} options={getBarChartOptions(campaignSpecific ? 'Top Categories by Spend' : 'Top Campaigns by Spend')} />
                 </Box>
                 {!campaignSpecific && (
                     <Box
@@ -574,7 +571,7 @@ export default function StatsLineChart({ selectedFilter, isLoading = false, adve
                             border: '1px solid #333'
                         }}
                     >
-                        <Bar data={top5KeywordSpendData} options={getBarChartOptions('Top 5 Keywords by Spend')} />
+                        <Bar data={top5CategorySpendData} options={getBarChartOptions('Top Categories by Spend')} />
                     </Box>
                 )}
             </Box>

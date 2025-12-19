@@ -24,12 +24,13 @@ const StyledBox = styled(Box)({
 
 const StyledButton = styled(Button)({
   borderRadius: '10px',
-  backgroundColor: '  ',
+  backgroundColor: '#d45b15',
   border: '1px solid #d45b15',
   width: '125px',
   marginRight: '20px',
   marginTop: '10px',
   marginBottom: '10px',
+  color: 'white',
   '&:hover': {
     backgroundColor: 'transparent',
     color: '#d45b15',
@@ -122,7 +123,6 @@ export default function Header({
         </Select>
       </FormControl>
       {showNewChatButton && <StyledButton
-        color="inherit"
         onClick={handleNewConversation}>
         New Chat
       </StyledButton>}

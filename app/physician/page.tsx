@@ -75,8 +75,6 @@ export default function PhysicianHome() {
       setAd(adResponse.data);
       setAdLoading(false);
 
-      // Wait for ad to complete (5 second wait) before starting LLM request
-      // The LLM streaming will only start after the ad is done
     } catch (error) {
       console.error('Error fetching the answer:', error);
       setLoading(false);
@@ -142,12 +140,41 @@ export default function PhysicianHome() {
     }
   };
 
-const handleAdComplete = () => {
-    setAd(null);
-    if (currentQuestion) {
-      startLLMStreaming(currentQuestion, questionHistory);
+  const handleAdImpression = async (ad: Ad) => {
+    try {
+      await axios.post('/api/advertisement/impression', {
+        campaign_category_id: ad.id,
+        bid: ad.bid
+      });
+    } catch (error) {
+      console.error('Error recording impression:', error);
     }
   };
+
+  const handleAdClick = async (ad: Ad) => {
+    try {
+      await axios.post('/api/advertisement/clicks', {
+        campaign_category_id: ad.id,
+        bid: ad.bid
+      });
+    } catch (error) {
+      console.error('Error recording ad click:', error);
+    }
+  };
+
+  // Handle the 5-second timer to hide the ad
+  useEffect(() => {
+    if (ad && ad.id) {
+      const timer = setTimeout(() => {
+        setAd(null);
+        if (currentQuestion) {
+          startLLMStreaming(currentQuestion, questionHistory);
+        }
+      }, 5000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [ad, currentQuestion, questionHistory]);
 
   const clearConversation = () => {
     setHistory([]);
@@ -182,7 +209,13 @@ const handleAdComplete = () => {
         />
         <Container maxWidth="md" style={{ flex: 1, overflowY: 'auto' }} ref={chatHistoryRef}>
           <ConversationHistory history={history} streamingContent={streamingContent} />
-          {ad && <AdvertisementCard ad={ad} onAdComplete={handleAdComplete} />}
+          {ad && (
+            <AdvertisementCard
+              ad={ad}
+              onAdImpression={handleAdImpression}
+              onAdClick={handleAdClick}
+            />
+          )}
           {ad && (
             <Box sx={{ textAlign: 'left', mt: 2 }}>
               <Typography color="white" >
