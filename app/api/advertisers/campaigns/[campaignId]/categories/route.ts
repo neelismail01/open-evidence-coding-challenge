@@ -5,8 +5,8 @@ import { SUPABASE_TABLE_NAME_ADVERTISING_CATEGORIES, SUPABASE_TABLE_NAME_CAMPAIG
 
 interface AdvertisingCategory {
     id: number;
-    keyword_string: string;
-    keyword_embedding: number[];
+    category_string: string;
+    category_embedding: number[];
 }
 
 interface CampaignCategory {
@@ -24,7 +24,7 @@ async function getOrCreateAdvertisingCategory(
 ): Promise<{ advertisingCategoryId?: string; response?: NextResponse }> {
 
   const { data: existingAdvertisingCategoriesData, error: existingAdvertisingCategoriesError } = await getRowsFromTable(SUPABASE_TABLE_NAME_ADVERTISING_CATEGORIES, {
-    filters: { keyword_string: categoryName },
+    filters: { category_string: categoryName },
   });
 
   if (existingAdvertisingCategoriesError) {
@@ -45,8 +45,8 @@ async function getOrCreateAdvertisingCategory(
   const embedding = await getEmbedding(categoryName);
   const { data: newAdvertisingCategoryData, error: newAdvertisingCategoryError } = await insertRowsToTable(SUPABASE_TABLE_NAME_ADVERTISING_CATEGORIES, [
     {
-      keyword_string: categoryName,
-      keyword_embedding: embedding,
+      category_string: categoryName,
+      category_embedding: embedding,
     },
   ]);
 
@@ -86,7 +86,7 @@ async function insertCampaignCategoryAssociation(
             campaign_id: campaignId,
             advertising_category_id: advertisingCategoryId,
             active: active, // Use the active status provided in the POST request
-            ...(bidAmount !== undefined && { bid_amount: bidAmount }),
+            ...(bidAmount !== undefined && { bid: bidAmount }),
         },
     ]);
 
@@ -122,7 +122,7 @@ async function updateCampaignCategoryAssociation(
       return NextResponse.json({ error: `Category '${categoryName}' not found for campaign '${campaignId}'. Use POST to add a new category.` }, { status: 404 });
   }
 
-  const updateData: { active?: boolean; bid_amount?: number } = {};
+  const updateData: { active?: boolean; bid?: number } = {};
   let changesMade = false;
 
   if (existingCampaignCategory!.active !== active) {
@@ -130,7 +130,7 @@ async function updateCampaignCategoryAssociation(
       changesMade = true;
   }
   if (bidAmount !== undefined && existingCampaignCategory!.bid !== bidAmount) {
-      updateData.bid_amount = bidAmount;
+      updateData.bid = bidAmount;
       changesMade = true;
   }
 
@@ -164,9 +164,9 @@ export async function GET(
 
     const dateRange = (startDate && endDate) ? { column: 'created_at', from: startDate, to: endDate } : undefined;
 
-    const { data: campaignCategoriesData, error: campaignCategoriesError } = await getRowsFromTable<CampaignCategory & { advertising_categories: { keyword_string: string } }>(SUPABASE_TABLE_NAME_CAMPAIGN_CATEGORIES, {
+    const { data: campaignCategoriesData, error: campaignCategoriesError } = await getRowsFromTable<CampaignCategory & { advertising_categories: { category_string: string } }>(SUPABASE_TABLE_NAME_CAMPAIGN_CATEGORIES, {
       filters: { campaign_id: campaignId, active: true },
-      selectString: '*, advertising_categories(keyword_string)',
+      selectString: '*, advertising_categories(category_string)',
       dateRange: dateRange,
     });
 
@@ -245,7 +245,7 @@ export async function PUT(
 
     // Ensure advertising category exists (don't create if not found for PUT)
     const { data: existingAdvertisingCategoriesData, error: existingAdvertisingCategoriesError } = await getRowsFromTable<AdvertisingCategory>(SUPABASE_TABLE_NAME_ADVERTISING_CATEGORIES, {
-      filters: { keyword_string: categoryName },
+      filters: { category_string: categoryName },
     });
     if (existingAdvertisingCategoriesError || !existingAdvertisingCategoriesData || existingAdvertisingCategoriesData.length === 0) {
       return NextResponse.json({ error: `Advertising category '${categoryName}' not found.` }, { status: 404 });

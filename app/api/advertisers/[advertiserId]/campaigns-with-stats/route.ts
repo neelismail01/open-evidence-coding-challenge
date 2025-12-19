@@ -135,7 +135,7 @@ export async function GET(
         if (campaignId && campaignStatsMap.has(campaignId)) {
           const stats = campaignStatsMap.get(campaignId)!;
           stats.impressions_count++;
-          stats.total_cost += (impression.bid || 0) * 100000;
+          stats.total_cost += (impression.bid || 0);
         }
       });
     }
@@ -147,7 +147,7 @@ export async function GET(
         if (campaignId && campaignStatsMap.has(campaignId)) {
           const stats = campaignStatsMap.get(campaignId)!;
           stats.clicks_count++;
-          stats.total_cost += (click.bid || 0) * 100000;
+          stats.total_cost += (click.bid || 0);
         }
       });
     }

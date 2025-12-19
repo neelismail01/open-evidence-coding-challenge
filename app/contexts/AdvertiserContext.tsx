@@ -46,7 +46,7 @@ const AdvertiserContext = createContext<AdvertiserContextType | undefined>(undef
 export function AdvertiserProvider({ children }: { children: ReactNode }) {
     const [activeAdvertiser, setActiveAdvertiser] = useState<Advertiser | null>(null);
     const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-    const [selectedFilter, setSelectedFilter] = useState("Last 24 Hours");
+    const [selectedFilter, setSelectedFilter] = useState("Last 7 Days");
     const [totalSpend, setTotalSpend] = useState<number>(0);
     const [aggregateCTR, setAggregateCTR] = useState<number>(0);
     const [totalImpressions, setTotalImpressions] = useState<number>(0);

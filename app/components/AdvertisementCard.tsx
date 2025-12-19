@@ -1,9 +1,8 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Box, Typography, Paper, Button } from '@mui/material';
 import LoadingIndicator from './LoadingIndicator';
 import { styled } from '@mui/system';
-import axios from 'axios';
 
 interface Company {
   name: string;
@@ -37,79 +36,60 @@ const StyledAdCard = styled(Paper)({
 
 interface AdvertisementCardProps {
   ad: Ad | null;
-  onAdComplete: () => void;
+  onAdImpression?: (ad: Ad) => void;
+  onAdClick?: (ad: Ad) => void;
 }
 
-export default function AdvertisementCard({ ad, onAdComplete }: AdvertisementCardProps) {
-  const [showAd, setShowAd] = useState(true);
-
+export default function AdvertisementCard({ ad, onAdImpression, onAdClick }: AdvertisementCardProps) {
   useEffect(() => {
-    if (ad && ad.id) {
-      setShowAd(true); // Reset showAd when a new ad arrives
-      const timer = setTimeout(() => {
-        setShowAd(false);
-        onAdComplete();
-      }, 5000);
-
-      const recordImpression = async () => {
-        try {
-          await axios.post('/api/advertisement/impression', {
-            campaign_category_id: ad.id,
-            bid: ad.bid
-          });
-        } catch (error) {
-          console.error('Error recording impression:', error);
-        }
-      };
-      recordImpression();
-      return () => clearTimeout(timer);
+    if (ad && ad.id && onAdImpression) {
+      onAdImpression(ad);
     }
-  }, [ad, onAdComplete]);
+  }, [ad, onAdImpression]);
 
-  const handleAdClick = async () => {
-    if (ad && ad.id) {
-      try {
-        await axios.post('/api/advertisement/clicks', {
-          campaign_category_id: ad.id,
-          bid: ad.bid
-        });
-      } catch (error) {
-        console.error('Error recording ad click', error)
-      }
+  const handleAdClick = () => {
+    if (ad && ad.id && onAdClick) {
+      onAdClick(ad);
     }
   }
 
+  if (ad === null) {
+    return (
+      <StyledAdCard mt={2}>
+        <LoadingIndicator />
+      </StyledAdCard>
+    );
+  }
+
   return (
-    <>
-      {ad === null ? (
-        <Box mt={2}>
-          <LoadingIndicator />
-          <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
-            Fetching advertisement...
-          </Typography>
-        </Box>
-      ) : showAd ? (
-        <StyledAdCard elevation={10}>
-          <Typography variant="h6" component="h3" gutterBottom>
-            {ad.campaigns.treatment_name}
-          </Typography>
-          <Typography variant="body2" paragraph>
-            {ad.campaigns.description}
-          </Typography>
-          <Button
-            variant="contained" 
-            style={{ backgroundColor: "#d45b15", borderRadius: '20px' }} 
-            href={ad.campaigns.product_url || ''} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            onClick={handleAdClick}
-          >
-            Learn More
-          </Button>
-        </StyledAdCard>
-      ) : (
-        null
-      )}
-    </>
+    <StyledAdCard elevation={10}>
+      <Typography variant="h6" component="h3" gutterBottom>
+        {ad.campaigns.treatment_name}
+      </Typography>
+      <Typography variant="body2" paragraph>
+        {ad.campaigns.description}
+      </Typography>
+      <Button
+        variant="contained"
+        style={{ backgroundColor: "#d45b15", borderRadius: '20px' }}
+        href={ad.campaigns.product_url || ''}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={handleAdClick}
+      >
+        View Prescribing Information
+      </Button>
+      <Typography
+        variant="caption"
+        sx={{
+          display: 'block',
+          marginTop: '1rem',
+          color: '#999',
+          fontSize: '0.75rem',
+        }}
+      >
+        Sponsored by {ad.campaigns.companies.name}
+      </Typography>
+    </StyledAdCard>
   );
 }

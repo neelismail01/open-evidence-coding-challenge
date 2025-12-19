@@ -370,7 +370,7 @@ export async function getAdvertiserStatsOverTime(
         }
         statsMap.get(date).impressions++;
         // Add impression cost (bid amount)
-        statsMap.get(date).spend += (impression.bid || 0) * 100000;
+        statsMap.get(date).spend += (impression.bid || 0);
       });
     }
 
@@ -383,7 +383,7 @@ export async function getAdvertiserStatsOverTime(
         }
         statsMap.get(date).clicks++;
         // Add click cost (bid amount)
-        statsMap.get(date).spend += (click.bid || 0) * 100000;
+        statsMap.get(date).spend += (click.bid || 0);
       });
     }
 
@@ -412,7 +412,7 @@ export async function getAdvertiserStatsOverTime(
         const campaignCategory = campaignCategories.find((cc: any) => cc.id === impression.campaign_category_id);
         if (campaignCategory && campaignStats.has(campaignCategory.campaign_id)) {
           campaignStats.get(campaignCategory.campaign_id).impressions++;
-          campaignStats.get(campaignCategory.campaign_id).spend += (impression.bid || 0) * 100000;
+          campaignStats.get(campaignCategory.campaign_id).spend += (impression.bid || 0);
         }
       });
     }
@@ -423,15 +423,13 @@ export async function getAdvertiserStatsOverTime(
         const campaignCategory = campaignCategories.find((cc: any) => cc.id === click.campaign_category_id);
         if (campaignCategory && campaignStats.has(campaignCategory.campaign_id)) {
           campaignStats.get(campaignCategory.campaign_id).clicks++;
-          campaignStats.get(campaignCategory.campaign_id).spend += (click.bid || 0) * 100000;
+          campaignStats.get(campaignCategory.campaign_id).spend += (click.bid || 0);
         }
       });
     }
 
     const campaignStatsArray = Array.from(campaignStats.values());
 
-    // Also get keyword-level stats for keyword bar charts
-    // First get all advertising categories (keywords) used by this company's campaigns
     const advertisingCategoryIds = campaignCategories.map((cc: any) => cc.advertising_category_id);
 
     const { data: advertisingCategories, error: advertisingCategoriesError } = await getRowsFromTable('advertising_categories', {
@@ -443,15 +441,15 @@ export async function getAdvertiserStatsOverTime(
       return { data: null, error: advertisingCategoriesError };
     }
 
-    // Create keyword stats map
-    const keywordStats = new Map();
+    // Create category stats map
+    const categoryStats = new Map();
 
-    // Initialize keyword stats
+    // Initialize category stats
     if (advertisingCategories) {
       advertisingCategories.forEach((category: any) => {
-        keywordStats.set(category.id, {
+        categoryStats.set(category.id, {
           id: category.id,
-          keyword: category.keyword_string,
+          category: category.category_string,
           impressions: 0,
           clicks: 0,
           spend: 0
@@ -459,35 +457,35 @@ export async function getAdvertiserStatsOverTime(
       });
     }
 
-    // Count impressions by keyword
+    // Count impressions by category
     if (impressions && advertisingCategories) {
       impressions.forEach((impression: any) => {
         const campaignCategory = campaignCategories.find((cc: any) => cc.id === impression.campaign_category_id);
-        if (campaignCategory && keywordStats.has(campaignCategory.advertising_category_id)) {
-          keywordStats.get(campaignCategory.advertising_category_id).impressions++;
-          keywordStats.get(campaignCategory.advertising_category_id).spend += (impression.bid || 0) * 100000;
+        if (campaignCategory && categoryStats.has(campaignCategory.advertising_category_id)) {
+          categoryStats.get(campaignCategory.advertising_category_id).impressions++;
+          categoryStats.get(campaignCategory.advertising_category_id).spend += (impression.bid || 0);
         }
       });
     }
 
-    // Count clicks by keyword
+    // Count clicks by category
     if (clicks && advertisingCategories) {
       clicks.forEach((click: any) => {
         const campaignCategory = campaignCategories.find((cc: any) => cc.id === click.campaign_category_id);
-        if (campaignCategory && keywordStats.has(campaignCategory.advertising_category_id)) {
-          keywordStats.get(campaignCategory.advertising_category_id).clicks++;
-          keywordStats.get(campaignCategory.advertising_category_id).spend += (click.bid || 0) * 100000;
+        if (campaignCategory && categoryStats.has(campaignCategory.advertising_category_id)) {
+          categoryStats.get(campaignCategory.advertising_category_id).clicks++;
+          categoryStats.get(campaignCategory.advertising_category_id).spend += (click.bid || 0);
         }
       });
     }
 
-    const keywordStatsArray = Array.from(keywordStats.values());
+    const categoryStatsArray = Array.from(categoryStats.values());
 
     return {
       data: {
         timeSeriesData: result,
         campaignStats: campaignStatsArray,
-        keywordStats: keywordStatsArray
+        categoryStats: categoryStatsArray
       },
       error: null
     };

@@ -24,14 +24,14 @@ interface Campaign {
     budget: number;
 }
 
-interface Keyword {
+interface Category {
     id: number;
     campaign_id: number;
     advertising_category_id: number;
     active: boolean;
     bid: number;
     advertising_categories: {
-        keyword_string: string;
+        category_string: string;
     };
     matches?: number;
     impressions?: number;
@@ -41,10 +41,9 @@ interface Keyword {
 
 interface ViewCampaignHeaderProps {
     onClose: () => void;
-    campaignName: string;
 }
 
-function ViewCampaignHeader({ onClose, campaignName }: ViewCampaignHeaderProps) {
+function ViewCampaignHeader({ onClose }: ViewCampaignHeaderProps) {
     return (
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
             <Typography variant="h6" sx={{ color: 'white' }}>
@@ -67,15 +66,15 @@ export default function ViewCampaignPage({ params }: { params: { campaignId: str
     const [isClosing, setIsClosing] = useState(false);
 
     // Analytics state
-    const [selectedFilter, setSelectedFilter] = useState("Last 24 Hours");
+    const [selectedFilter, setSelectedFilter] = useState("Last 7 Days");
     const [totalSpend, setTotalSpend] = useState<number>(0);
     const [aggregateCTR, setAggregateCTR] = useState<number>(0);
     const [totalImpressions, setTotalImpressions] = useState<number>(0);
     const [analyticsLoading, setAnalyticsLoading] = useState<boolean>(false);
 
-    // Keywords state
-    const [keywords, setKeywords] = useState<Keyword[]>([]);
-    const [keywordsLoading, setKeywordsLoading] = useState<boolean>(false);
+    // Categories state
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [categoriesLoading, setCategoriesLoading] = useState<boolean>(false);
 
     function getStartAndEndDatesFromFilter(filter: string): [string | null, string | null] {
         const now = new Date();
@@ -128,7 +127,7 @@ export default function ViewCampaignPage({ params }: { params: { campaignId: str
             let totalCost = 0;
             for (const category of categories) {
                 const costResponse = await axios.get(`/api/advertisers/campaigns/categories/${category.id}/cost${queryString ? `?${queryString}` : ''}`);
-                totalCost += costResponse.data.total_cost * 100000;
+                totalCost += costResponse.data.total_cost;
             }
 
             setTotalImpressions(impressionsCount);
@@ -143,11 +142,11 @@ export default function ViewCampaignPage({ params }: { params: { campaignId: str
         }
     }
 
-    async function fetchKeywords(campaignId: string, startDate: string | null, endDate: string | null) {
+    async function fetchCategories(campaignId: string, startDate: string | null, endDate: string | null) {
         try {
-            setKeywordsLoading(true);
+            setCategoriesLoading(true);
 
-            // Fetch keywords
+            // Fetch categories
             const categoriesResponse = await axios.get(`/api/advertisers/campaigns/${campaignId}/categories`);
             const categories = categoriesResponse.data.categories;
 
@@ -162,24 +161,24 @@ export default function ViewCampaignPage({ params }: { params: { campaignId: str
             const queryString = queryParams.toString();
 
             const statsResponse = await axios.get(`/api/advertisers/campaigns/${campaignId}/stats${queryString ? `?${queryString}` : ''}`);
-            const keywordStats = statsResponse.data.stats.keywordStats;
+            const categoryStats = statsResponse.data.stats.categoryStats;
 
-            // Merge stats with keywords
-            const keywordsWithStats = categories.map((keyword: Keyword) => {
-                const stats = keywordStats.find((stat: any) => stat.id === keyword.advertising_category_id);
+            // Merge stats with categories
+            const categoriesWithStats = categories.map((category: Category) => {
+                const stats = categoryStats.find((stat: any) => stat.id === category.advertising_category_id);
                 return {
-                    ...keyword,
+                    ...category,
                     impressions: stats?.impressions || 0,
                     clicks: stats?.clicks || 0,
                     spend: stats?.spend || 0
                 };
             });
 
-            setKeywords(keywordsWithStats);
+            setCategories(categoriesWithStats);
         } catch (error) {
-            console.error('Error fetching keywords:', error);
+            console.error('Error fetching categories:', error);
         } finally {
-            setKeywordsLoading(false);
+            setCategoriesLoading(false);
         }
     }
 
@@ -202,7 +201,7 @@ export default function ViewCampaignPage({ params }: { params: { campaignId: str
     useEffect(() => {
         const [startDate, endDate] = getStartAndEndDatesFromFilter(selectedFilter);
         fetchCampaignAnalytics(params.campaignId, startDate, endDate);
-        fetchKeywords(params.campaignId, startDate, endDate);
+        fetchCategories(params.campaignId, startDate, endDate);
     }, [params.campaignId, selectedFilter]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const handleClose = () => {
@@ -245,272 +244,265 @@ export default function ViewCampaignPage({ params }: { params: { campaignId: str
                     overflow: 'auto',
                 }}
             >
-                {loading ? (
-                    <Typography sx={{ color: 'white' }}>Loading...</Typography>
-                ) : (
-                    !campaign ? (
-                        <Typography sx={{ color: 'white' }}>Campaign not found.</Typography>
-                    ) : (
-                        <Box
-                            style={{ margin: '20px auto' }}
-                        >
-                            <Container maxWidth="lg" style={{ marginTop: '20px' }}>
-                                <ViewCampaignHeader onClose={handleClose} campaignName={campaign.treatment_name} />
+                {<Box
+                        style={{ margin: '20px auto' }}
+                    >
+                        <Container maxWidth="lg" style={{ marginTop: '20px' }}>
+                            <ViewCampaignHeader onClose={handleClose} />
 
-                                {/* Campaign Analytics Section */}
-                                <TimeFilter
-                                    selectedFilter={selectedFilter}
-                                    setSelectedFilter={setSelectedFilter}
-                                />
+                            {/* Campaign Analytics Section */}
+                            <TimeFilter
+                                selectedFilter={selectedFilter}
+                                setSelectedFilter={setSelectedFilter}
+                            />
 
-                                {/* Summary Cards */}
-                                <Box sx={{ margin: '0 auto 20px auto', display: 'flex', gap: '20px' }}>
-                                    {/* Total Impressions Card */}
-                                    <Box
-                                        sx={{
-                                            flex: 1,
-                                            backgroundColor: '#1a1a1a',
-                                            padding: '20px',
-                                            borderRadius: '8px',
-                                            border: '1px solid #333',
-                                            textAlign: 'center'
-                                        }}
-                                    >
-                                        <Typography variant="h6" style={{ color: 'white', marginBottom: '10px' }}>
-                                            Total Impressions
-                                        </Typography>
-                                        {analyticsLoading ? (
-                                            <Box sx={{
-                                                width: '150px',
-                                                height: '40px',
-                                                bgcolor: '#525252',
-                                                borderRadius: 1,
-                                                margin: '0 auto',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center'
-                                            }}>
-                                                <Typography style={{ color: 'white', fontSize: '14px' }}>Loading...</Typography>
-                                            </Box>
-                                        ) : (
-                                            <Typography
-                                                variant="h4"
-                                                style={{
-                                                    color: '#d45b15',
-                                                    fontWeight: 'bold',
-                                                    fontFamily: 'monospace'
-                                                }}
-                                            >
-                                                {totalImpressions.toLocaleString()}
-                                            </Typography>
-                                        )}
-                                    </Box>
-
-                                    {/* Total Spend Card */}
-                                    <Box
-                                        sx={{
-                                            flex: 1,
-                                            backgroundColor: '#1a1a1a',
-                                            padding: '20px',
-                                            borderRadius: '8px',
-                                            border: '1px solid #333',
-                                            textAlign: 'center'
-                                        }}
-                                    >
-                                        <Typography variant="h6" style={{ color: 'white', marginBottom: '10px' }}>
-                                            Total Spend
-                                        </Typography>
-                                        {analyticsLoading ? (
-                                            <Box sx={{
-                                                width: '150px',
-                                                height: '40px',
-                                                bgcolor: '#525252',
-                                                borderRadius: 1,
-                                                margin: '0 auto',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center'
-                                            }}>
-                                                <Typography style={{ color: 'white', fontSize: '14px' }}>Loading...</Typography>
-                                            </Box>
-                                        ) : (
-                                            <Typography
-                                                variant="h4"
-                                                style={{
-                                                    color: '#d45b15',
-                                                    fontWeight: 'bold',
-                                                    fontFamily: 'monospace'
-                                                }}
-                                            >
-                                                ${totalSpend.toFixed(2)}
-                                            </Typography>
-                                        )}
-                                    </Box>
-
-                                    {/* Aggregate CTR Card */}
-                                    <Box
-                                        sx={{
-                                            flex: 1,
-                                            backgroundColor: '#1a1a1a',
-                                            padding: '20px',
-                                            borderRadius: '8px',
-                                            border: '1px solid #333',
-                                            textAlign: 'center'
-                                        }}
-                                    >
-                                        <Typography variant="h6" style={{ color: 'white', marginBottom: '10px' }}>
-                                            Aggregate CTR
-                                        </Typography>
-                                        {analyticsLoading ? (
-                                            <Box sx={{
-                                                width: '150px',
-                                                height: '40px',
-                                                bgcolor: '#525252',
-                                                borderRadius: 1,
-                                                margin: '0 auto',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center'
-                                            }}>
-                                                <Typography style={{ color: 'white', fontSize: '14px' }}>Loading...</Typography>
-                                            </Box>
-                                        ) : (
-                                            <Typography
-                                                variant="h4"
-                                                style={{
-                                                    color: '#d45b15',
-                                                    fontWeight: 'bold',
-                                                    fontFamily: 'monospace'
-                                                }}
-                                            >
-                                                {aggregateCTR.toFixed(2)}%
-                                            </Typography>
-                                        )}
-                                    </Box>
-                                </Box>
-
-                                <StatsLineChart
-                                    selectedFilter={selectedFilter}
-                                    isLoading={analyticsLoading}
-                                    advertiserId={parseInt(params.campaignId)}
-                                    campaignSpecific={true}
-                                />
-
-                                {/* Keywords Table */}
-                                <Box sx={{ marginTop: '20px' }}>
-                                    <Typography
-                                        variant="h6"
-                                        sx={{
-                                            color: 'white',
-                                            marginBottom: '16px',
-                                            fontWeight: 'bold'
-                                        }}
-                                    >
-                                        Campaign Keywords
+                            {/* Summary Cards */}
+                            <Box sx={{ margin: '0 auto 20px auto', display: 'flex', gap: '20px' }}>
+                                {/* Total Impressions Card */}
+                                <Box
+                                    sx={{
+                                        flex: 1,
+                                        backgroundColor: '#1a1a1a',
+                                        padding: '20px',
+                                        borderRadius: '8px',
+                                        border: '1px solid #333',
+                                        textAlign: 'center'
+                                    }}
+                                >
+                                    <Typography variant="h6" style={{ color: 'white', marginBottom: '10px' }}>
+                                        Total Impressions
                                     </Typography>
-                                    <GenericTable
-                                        data={keywords}
-                                        columns={[
-                                            {
-                                                id: 'keyword',
-                                                label: 'Keyword',
-                                                align: 'left',
-                                                tooltip: 'Target keyword for ad matching',
-                                                render: (row: Keyword) => row.advertising_categories?.keyword_string || 'N/A'
-                                            },
-                                            {
-                                                id: 'bid',
-                                                label: 'Bid Amount',
-                                                align: 'center',
-                                                tooltip: 'Amount willing to pay per impression/click',
-                                                render: (row: Keyword) => `$${row.bid?.toFixed(2) || '0.00'}`
-                                            },
-                                            {
-                                                id: 'impressions',
-                                                label: 'Impressions',
-                                                align: 'center',
-                                                tooltip: 'Times this keyword won the auction and displayed an ad',
-                                                render: (row: Keyword) => (row.impressions || 0).toLocaleString()
-                                            },
-                                            {
-                                                id: 'clicks',
-                                                label: 'Clicks',
-                                                align: 'center',
-                                                tooltip: 'Number of clicks received for this keyword',
-                                                render: (row: Keyword) => (row.clicks || 0).toLocaleString()
-                                            },
-                                            {
-                                                id: 'ctr',
-                                                label: 'CTR',
-                                                align: 'center',
-                                                tooltip: 'Click-through rate: clicks divided by impressions',
-                                                render: (row: Keyword) => {
-                                                    const ctr = (row.impressions && row.impressions > 0)
-                                                        ? ((row.clicks || 0) / row.impressions * 100)
-                                                        : 0;
-                                                    return `${ctr.toFixed(2)}%`;
-                                                }
-                                            },
-                                            {
-                                                id: 'winRate',
-                                                label: 'Win %',
-                                                align: 'center',
-                                                tooltip: 'Percentage of keyword matches where this campaign won the auction',
-                                                render: (row: Keyword) => {
-                                                    const winRate = (row.matches && row.matches > 0)
-                                                        ? ((row.impressions || 0) / row.matches * 100)
-                                                        : 0;
-                                                    return `${winRate.toFixed(2)}%`;
-                                                }
-                                            },
-                                            {
-                                                id: 'cpc',
-                                                label: 'Cost per Click',
-                                                align: 'center',
-                                                tooltip: 'Average cost per click for this keyword',
-                                                render: (row: Keyword) => {
-                                                    const cpc = (row.clicks && row.clicks > 0)
-                                                        ? ((row.spend || 0) / row.clicks)
-                                                        : 0;
-                                                    return `$${cpc.toFixed(4)}`;
-                                                }
-                                            },
-                                            {
-                                                id: 'spend',
-                                                label: 'Total Spend',
-                                                align: 'center',
-                                                tooltip: 'Total amount spent on this keyword',
-                                                render: (row: Keyword) => `$${(row.spend || 0).toFixed(2)}`
-                                            },
-                                            {
-                                                id: 'active',
-                                                label: 'Status',
-                                                align: 'center',
-                                                tooltip: 'Whether this keyword is currently active',
-                                                render: (row: Keyword) => (
-                                                    <Box
-                                                        sx={{
-                                                            display: 'inline-block',
-                                                            padding: '4px 12px',
-                                                            borderRadius: '4px',
-                                                            backgroundColor: row.active ? '#1b5e20' : '#c62828',
-                                                            color: 'white',
-                                                            fontSize: '12px',
-                                                            fontWeight: 'bold'
-                                                        }}
-                                                    >
-                                                        {row.active ? 'Active' : 'Inactive'}
-                                                    </Box>
-                                                )
-                                            }
-                                        ]}
-                                        isLoading={keywordsLoading}
-                                    />
+                                    {analyticsLoading ? (
+                                        <Box sx={{
+                                            width: '150px',
+                                            height: '40px',
+                                            backgroundColor: '#1a1a1a',
+                                            borderRadius: 1,
+                                            margin: '0 auto',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
+                                        }}>
+                                            <Typography style={{ color: 'white', fontSize: '14px' }}>Loading...</Typography>
+                                        </Box>
+                                    ) : (
+                                        <Typography
+                                            variant="h4"
+                                            style={{
+                                                color: '#d45b15',
+                                                fontWeight: 'bold',
+                                                fontFamily: 'monospace'
+                                            }}
+                                        >
+                                            {totalImpressions.toLocaleString()}
+                                        </Typography>
+                                    )}
                                 </Box>
-                            </Container>
-                        </Box>
-                    )
-                )}
+
+                                {/* Total Spend Card */}
+                                <Box
+                                    sx={{
+                                        flex: 1,
+                                        backgroundColor: '#1a1a1a',
+                                        padding: '20px',
+                                        borderRadius: '8px',
+                                        border: '1px solid #333',
+                                        textAlign: 'center'
+                                    }}
+                                >
+                                    <Typography variant="h6" style={{ color: 'white', marginBottom: '10px' }}>
+                                        Total Spend
+                                    </Typography>
+                                    {analyticsLoading ? (
+                                        <Box sx={{
+                                            width: '150px',
+                                            height: '40px',
+                                            backgroundColor: '#1a1a1a',
+                                            borderRadius: 1,
+                                            margin: '0 auto',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
+                                        }}>
+                                            <Typography style={{ color: 'white', fontSize: '14px' }}>Loading...</Typography>
+                                        </Box>
+                                    ) : (
+                                        <Typography
+                                            variant="h4"
+                                            style={{
+                                                color: '#d45b15',
+                                                fontWeight: 'bold',
+                                                fontFamily: 'monospace'
+                                            }}
+                                        >
+                                            ${totalSpend.toFixed(2)}
+                                        </Typography>
+                                    )}
+                                </Box>
+
+                                {/* Aggregate CTR Card */}
+                                <Box
+                                    sx={{
+                                        flex: 1,
+                                        backgroundColor: '#1a1a1a',
+                                        padding: '20px',
+                                        borderRadius: '8px',
+                                        border: '1px solid #333',
+                                        textAlign: 'center'
+                                    }}
+                                >
+                                    <Typography variant="h6" style={{ color: 'white', marginBottom: '10px' }}>
+                                        Aggregate CTR
+                                    </Typography>
+                                    {analyticsLoading ? (
+                                        <Box sx={{
+                                            width: '150px',
+                                            height: '40px',
+                                            backgroundColor: '#1a1a1a',
+                                            borderRadius: 1,
+                                            margin: '0 auto',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
+                                        }}>
+                                            <Typography style={{ color: 'white', fontSize: '14px' }}>Loading...</Typography>
+                                        </Box>
+                                    ) : (
+                                        <Typography
+                                            variant="h4"
+                                            style={{
+                                                color: '#d45b15',
+                                                fontWeight: 'bold',
+                                                fontFamily: 'monospace'
+                                            }}
+                                        >
+                                            {aggregateCTR.toFixed(2)}%
+                                        </Typography>
+                                    )}
+                                </Box>
+                            </Box>
+
+                            <StatsLineChart
+                                selectedFilter={selectedFilter}
+                                isLoading={analyticsLoading}
+                                advertiserId={parseInt(params.campaignId)}
+                                campaignSpecific={true}
+                            />
+
+                            {/* Categories Table */}
+                            <Box sx={{ marginTop: '20px' }}>
+                                <Typography
+                                    variant="h6"
+                                    sx={{
+                                        color: 'white',
+                                        marginBottom: '16px',
+                                        fontWeight: 'bold'
+                                    }}
+                                >
+                                    Campaign Categories
+                                </Typography>
+                                <GenericTable
+                                    data={categories}
+                                    columns={[
+                                        {
+                                            id: 'category',
+                                            label: 'Category',
+                                            align: 'left',
+                                            tooltip: 'Target category for ad matching',
+                                            render: (row: Category) => row.advertising_categories?.category_string || 'N/A'
+                                        },
+                                        {
+                                            id: 'bid',
+                                            label: 'Bid Amount',
+                                            align: 'center',
+                                            tooltip: 'Amount willing to pay per impression/click',
+                                            render: (row: Category) => `$${row.bid?.toFixed(2) || '0.00'}`
+                                        },
+                                        {
+                                            id: 'impressions',
+                                            label: 'Impressions',
+                                            align: 'center',
+                                            tooltip: 'Times this category won the auction and displayed an ad',
+                                            render: (row: Category) => (row.impressions || 0).toLocaleString()
+                                        },
+                                        {
+                                            id: 'clicks',
+                                            label: 'Clicks',
+                                            align: 'center',
+                                            tooltip: 'Number of clicks received for this category',
+                                            render: (row: Category) => (row.clicks || 0).toLocaleString()
+                                        },
+                                        {
+                                            id: 'ctr',
+                                            label: 'CTR',
+                                            align: 'center',
+                                            tooltip: 'Click-through rate: clicks divided by impressions',
+                                            render: (row: Category) => {
+                                                const ctr = (row.impressions && row.impressions > 0)
+                                                    ? ((row.clicks || 0) / row.impressions * 100)
+                                                    : 0;
+                                                return `${ctr.toFixed(2)}%`;
+                                            }
+                                        },
+                                        {
+                                            id: 'winRate',
+                                            label: 'Win %',
+                                            align: 'center',
+                                            tooltip: 'Percentage of category matches where this campaign won the auction',
+                                            render: (row: Category) => {
+                                                const winRate = (row.matches && row.matches > 0)
+                                                    ? ((row.impressions || 0) / row.matches * 100)
+                                                    : 0;
+                                                return `${winRate.toFixed(2)}%`;
+                                            }
+                                        },
+                                        {
+                                            id: 'cpc',
+                                            label: 'Cost per Click',
+                                            align: 'center',
+                                            tooltip: 'Average cost per click for this category',
+                                            render: (row: Category) => {
+                                                const cpc = (row.clicks && row.clicks > 0)
+                                                    ? ((row.spend || 0) / row.clicks)
+                                                    : 0;
+                                                return `$${cpc.toFixed(2)}`;
+                                            }
+                                        },
+                                        {
+                                            id: 'spend',
+                                            label: 'Total Spend',
+                                            align: 'center',
+                                            tooltip: 'Total amount spent on this category',
+                                            render: (row: Category) => `$${(row.spend || 0).toFixed(2)}`
+                                        },
+                                        {
+                                            id: 'active',
+                                            label: 'Status',
+                                            align: 'center',
+                                            tooltip: 'Whether this category is currently active',
+                                            render: (row: Category) => (
+                                                <Box
+                                                    sx={{
+                                                        display: 'inline-block',
+                                                        padding: '4px 12px',
+                                                        borderRadius: '4px',
+                                                        backgroundColor: row.active ? '#1b5e20' : '#c62828',
+                                                        color: 'white',
+                                                        fontSize: '12px',
+                                                        fontWeight: 'bold'
+                                                    }}
+                                                >
+                                                    {row.active ? 'Active' : 'Inactive'}
+                                                </Box>
+                                            )
+                                        }
+                                    ]}
+                                    isLoading={categoriesLoading}
+                                />
+                            </Box>
+                        </Container>
+                    </Box>
+                }
             </Box>
     );
 }

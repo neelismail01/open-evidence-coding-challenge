@@ -40,6 +40,6 @@ export interface impression {
 export interface advertising_category {
     id: number;
     created_at: string;
-    keyword: string;
-    keyword_embedding: any[]
+    category: string;
+    category_embedding: any[]
 }

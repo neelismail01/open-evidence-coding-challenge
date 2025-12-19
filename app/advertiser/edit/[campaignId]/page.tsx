@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Button, Container, TextField, FormControlLabel, Switch, Chip, IconButton, Snackbar, Alert, FormControl, MenuItem, Select, SelectChangeEvent } from '@mui/material';
+import { Box, Typography, Button, Container, TextField, FormControlLabel, Switch, Chip, IconButton, Snackbar, Alert, FormControl, MenuItem, Select, SelectChangeEvent, InputAdornment } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import CloseIcon from '@mui/icons-material/Close';
@@ -9,14 +9,8 @@ import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
 import GenericTable from '../../../components/GenericTable';
+import AdvertisementCard from '../../../components/AdvertisementCard';
 import { useAdvertiser } from '../../../contexts/AdvertiserContext';
-import {
-    FILTER_DURATION_1_YEAR,
-    FILTER_DURATION_24_HRS,
-    FILTER_DURATION_7_DAYS,
-    FILTER_DURATION_30_DAYS,
-    FILTER_DURATION_ALL_TIME
-} from '../../../../utils/constants';
 
 interface Campaign {
     id: number;
@@ -27,13 +21,13 @@ interface Campaign {
     product_url?: string;
 }
 
-interface KeywordBid {
+interface CategoryBid {
     id: number;
     advertising_category_id: number;
     bid: number;
     active: boolean;
     advertising_categories?: {
-        keyword_string: string;
+        category_string: string;
     };
 }
 
@@ -62,6 +56,9 @@ interface CampaignDetailsFormProps {
     description: string;
     productUrl: string;
     isActive: boolean;
+    originalName: string;
+    originalDescription: string;
+    originalProductUrl: string;
     onNameChange: (value: string) => void;
     onDescriptionChange: (value: string) => void;
     onProductUrlChange: (value: string) => void;
@@ -76,6 +73,9 @@ function CampaignDetailsForm({
     description,
     productUrl,
     isActive,
+    originalName,
+    originalDescription,
+    originalProductUrl,
     onNameChange,
     onDescriptionChange,
     onProductUrlChange,
@@ -84,11 +84,12 @@ function CampaignDetailsForm({
     saveButtonSx,
     loading = false,
 }: CampaignDetailsFormProps) {
+
     const formFieldStyle = {
         backgroundColor: '#1a1a1a',
         borderRadius: '8px',
         border: '1px solid #333',
-        padding: '20px',
+        padding: '15px',
         marginBottom: '16px'
     };
 
@@ -106,18 +107,27 @@ function CampaignDetailsForm({
         },
         '& .MuiInputLabel-root': {
             color: '#ccc',
+            fontSize: '14px',
             '&.Mui-focused': {
                 color: '#d45b15'
             }
         },
         '& .MuiOutlinedInput-input': {
-            color: 'white'
+            color: 'white',
+            fontSize: '14px',
+            height: '10px',
+            // Style the numeric input arrows to be white
+            '&[type=number]::-webkit-inner-spin-button, &[type=number]::-webkit-outer-spin-button': {
+                WebkitAppearance: 'auto',
+                opacity: 1,
+                filter: 'invert(1)',
+            },
         }
     };
 
     const loadingBoxStyle = {
         width: '100%',
-        height: 56,
+        height: 42,
         bgcolor: '#525252',
         borderRadius: 1
     };
@@ -126,7 +136,7 @@ function CampaignDetailsForm({
         <Box>
             {/* Treatment Name Field */}
             <Box sx={formFieldStyle}>
-                <Typography variant="h6" sx={{ color: 'white', marginBottom: '12px' }}>
+                <Typography variant="h6" sx={{ fontSize: '14px', color: 'white', marginBottom: '12px' }}>
                     Treatment Name
                 </Typography>
                 {loading ? (
@@ -142,10 +152,10 @@ function CampaignDetailsForm({
                         />
                         <Button
                             onClick={() => onUpdateCampaignField('treatment_name', name)}
+                            disabled={name === originalName}
                             sx={{
                                 ...saveButtonSx,
-                                minWidth: '80px',
-                                height: '56px'
+                                minWidth: '80px'
                             }}
                         >
                             Save
@@ -156,7 +166,7 @@ function CampaignDetailsForm({
 
             {/* Description Field */}
             <Box sx={formFieldStyle}>
-                <Typography variant="h6" sx={{ color: 'white', marginBottom: '12px' }}>
+                <Typography variant="h6" sx={{ fontSize: '14px', color: 'white', marginBottom: '12px' }}>
                     Description
                 </Typography>
                 {loading ? (
@@ -167,17 +177,15 @@ function CampaignDetailsForm({
                             value={description}
                             onChange={(e) => onDescriptionChange(e.target.value)}
                             fullWidth
-                            multiline
-                            rows={3}
                             placeholder="Enter campaign description"
                             sx={textFieldStyle}
                         />
                         <Button
                             onClick={() => onUpdateCampaignField('description', description)}
+                            disabled={description === originalDescription}
                             sx={{
                                 ...saveButtonSx,
                                 minWidth: '80px',
-                                height: '56px'
                             }}
                         >
                             Save
@@ -188,7 +196,7 @@ function CampaignDetailsForm({
 
             {/* Product URL Field */}
             <Box sx={formFieldStyle}>
-                <Typography variant="h6" sx={{ color: 'white', marginBottom: '12px' }}>
+                <Typography variant="h6" sx={{ fontSize: '14px', color: 'white', marginBottom: '12px' }}>
                     Product URL
                 </Typography>
                 {loading ? (
@@ -204,10 +212,10 @@ function CampaignDetailsForm({
                         />
                         <Button
                             onClick={() => onUpdateCampaignField('product_url', productUrl)}
+                            disabled={productUrl === originalProductUrl}
                             sx={{
                                 ...saveButtonSx,
                                 minWidth: '80px',
-                                height: '56px'
                             }}
                         >
                             Save
@@ -218,7 +226,7 @@ function CampaignDetailsForm({
 
             {/* Campaign Status */}
             <Box sx={formFieldStyle}>
-                <Typography variant="h6" sx={{ color: 'white', marginBottom: '12px' }}>
+                <Typography variant="h6" sx={{ fontSize: '14px', color: 'white', marginBottom: '12px' }}>
                     Campaign Status
                 </Typography>
                 {loading ? (
@@ -247,15 +255,6 @@ function CampaignDetailsForm({
                                 <Typography sx={{ color: 'white' }}>
                                     Active Campaign
                                 </Typography>
-                                <Chip
-                                    label={isActive ? "Running" : "Paused"}
-                                    size="small"
-                                    sx={{
-                                        backgroundColor: isActive ? '#67e077' : '#d6857a',
-                                        color: isActive ? '#022907' : '#6b1206',
-                                        fontWeight: 'bold'
-                                    }}
-                                />
                             </Box>
                         }
                     />
@@ -265,64 +264,182 @@ function CampaignDetailsForm({
     );
 }
 
-interface KeywordBidManagerProps {
-    keywordInput: string;
-    bidInput: number;
-    categories: KeywordBid[];
-    onKeywordInputChange: (value: string) => void;
-    onBidInputChange: (value: number) => void;
-    onAddKeyword: () => Promise<void>;
-    onDeleteKeyword: (keyword: string) => Promise<void>;
-    onUpdateBid: (keyword: string, newBid: number) => Promise<void>;
+interface AdPreviewProps {
+    name: string;
+    description: string;
+    productUrl: string;
+    campaignId: string;
+    companyName: string;
     loading?: boolean;
 }
 
-function KeywordBidManager({
-    keywordInput,
-    bidInput,
-    categories,
-    onKeywordInputChange,
-    onBidInputChange,
-    onAddKeyword,
-    onDeleteKeyword,
-    onUpdateBid,
-    loading = false,
-}: KeywordBidManagerProps) {
-    const [editingKeyword, setEditingKeyword] = useState<string | null>(null);
-    const [editBidValue, setEditBidValue] = useState<number>(0);
+function AdPreview({ name, description, productUrl, campaignId, companyName, loading = false }: AdPreviewProps) {
+    const previewBoxStyle = {
+        backgroundColor: '#1a1a1a',
+        borderRadius: '12px',
+        border: '1px solid #2a2a2a',
+        padding: '32px',
+        marginBottom: '20px',
+        position: 'relative' as const
+    };
 
     const loadingBoxStyle = {
         width: '100%',
-        height: 56,
+        height: 200,
         bgcolor: '#525252',
         borderRadius: 1
     };
 
-    const handleStartEdit = (keyword: string, currentBid: number) => {
-        setEditingKeyword(keyword);
+    // Create a mock ad object for the preview
+    const mockAd = name && description ? {
+        id: parseInt(campaignId),
+        campaign_id: parseInt(campaignId),
+        campaigns: {
+            companies: {
+                name: companyName
+            },
+            description: description,
+            id: parseInt(campaignId),
+            product_url: productUrl || null,
+            treatment_name: name
+        },
+        bid: 0
+    } : null;
+
+    return (
+        <Box sx={previewBoxStyle}>
+            <Box sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '16px',
+                marginBottom: '24px'
+            }}>
+                <Box sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px'
+                }}>
+                    <Box sx={{
+                        width: '40px',
+                        height: '1px',
+                        backgroundColor: '#333'
+                    }} />
+                    <Chip
+                        label="PREVIEW"
+                        size="small"
+                        sx={{
+                            backgroundColor: 'transparent',
+                            border: '1.5px solid #d45b15',
+                            color: '#d45b15',
+                            fontSize: '11px',
+                            fontWeight: 'bold',
+                            height: '24px',
+                            letterSpacing: '1px'
+                        }}
+                    />
+                    <Box sx={{
+                        width: '40px',
+                        height: '1px',
+                        backgroundColor: '#333'
+                    }} />
+                </Box>
+                <Typography variant="body2" sx={{
+                    textAlign: 'center',
+                    color: '#666',
+                    fontSize: '13px',
+                    fontStyle: 'italic'
+                }}>
+                    How your advertisement will appear to physicians
+                </Typography>
+            </Box>
+            {loading ? (
+                <Box sx={loadingBoxStyle} />
+            ) : (
+                <Box sx={{
+                    position: 'relative',
+                    '&::before': {
+                        content: '""',
+                        position: 'absolute',
+                        inset: '-12px',
+                        borderRadius: '30px',
+                        padding: '2px',
+                        background: 'linear-gradient(135deg, #d45b15 0%, #b34711 100%)',
+                        WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                        WebkitMaskComposite: 'xor',
+                        maskComposite: 'exclude',
+                        opacity: 0.3
+                    },
+                    '& > div': {
+                        marginTop: 0,
+                        marginBottom: 0
+                    },
+                }}>
+                    <AdvertisementCard ad={mockAd} />
+                </Box>
+            )}
+        </Box>
+    );
+}
+
+interface CategoryBidManagerProps {
+    categoryInput: string;
+    bidInput: number;
+    categories: CategoryBid[];
+    onCategoryInputChange: (value: string) => void;
+    onBidInputChange: (value: number) => void;
+    onAddCategory: () => Promise<void>;
+    onDeleteCategory: (category: string) => Promise<void>;
+    onUpdateBid: (category: string, newBid: number) => Promise<void>;
+    loading?: boolean;
+}
+
+function CategoryBidManager({
+    categoryInput,
+    bidInput,
+    categories,
+    onCategoryInputChange,
+    onBidInputChange,
+    onAddCategory,
+    onDeleteCategory,
+    onUpdateBid,
+    loading = false,
+}: CategoryBidManagerProps) {
+    const [editingCategory, setEditingCategory] = useState<string | null>(null);
+    const [editBidValue, setEditBidValue] = useState<number>(0);
+
+    const loadingBoxStyle = {
+        width: '100%',
+        height: 42,
+        bgcolor: '#525252',
+        borderRadius: 1
+    };
+
+    const handleStartEdit = (category: string, currentBid: number) => {
+        setEditingCategory(category);
         setEditBidValue(currentBid);
     };
 
     const handleCancelEdit = () => {
-        setEditingKeyword(null);
+        setEditingCategory(null);
         setEditBidValue(0);
     };
 
-    const handleSaveEdit = async (keyword: string) => {
+    const handleSaveEdit = async (category: string) => {
         if (editBidValue > 0) {
-            await onUpdateBid(keyword, editBidValue);
-            setEditingKeyword(null);
+            await onUpdateBid(category, editBidValue);
+            setEditingCategory(null);
             setEditBidValue(0);
         }
     };
 
-    const keywordColumns = [
+    const categoryColumns = [
         {
-            id: 'keyword',
-            label: 'Keyword',
-            render: (row: KeywordBid) => (
-                <Typography sx={{ color: 'white', fontWeight: 'medium' }}>
-                    {row.advertising_categories?.keyword_string || `ID: ${row.advertising_category_id}`}
+            id: 'category',
+            label: 'Category',
+            render: (row: CategoryBid) => (
+                <Typography sx={{ color: 'white', fontSize: '14px', fontWeight: 'medium' }}>
+                    {row.advertising_categories?.category_string || `ID: ${row.advertising_category_id}`}
                 </Typography>
             ),
             align: 'left' as const
@@ -330,104 +447,136 @@ function KeywordBidManager({
         {
             id: 'bid_amount',
             label: 'Bid Amount',
-            render: (row: KeywordBid) => {
-                const keyword = row.advertising_categories?.keyword_string || String(row.advertising_category_id);
-                const isEditing = editingKeyword === keyword;
+            render: (row: CategoryBid) => {
+                const category = row.advertising_categories?.category_string || String(row.advertising_category_id);
+                const isEditing = editingCategory === category;
 
                 if (isEditing) {
                     return (
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <TextField
                                 type="number"
                                 value={editBidValue}
                                 onChange={(e) => setEditBidValue(parseFloat(e.target.value) || 0)}
                                 size="small"
+                                autoFocus
                                 sx={{
-                                    width: '80px',
+                                    width: '140px',
                                     '& .MuiOutlinedInput-root': {
                                         '& fieldset': { borderColor: '#333' },
                                         '&:hover fieldset': { borderColor: '#d45b15' },
                                         '&.Mui-focused fieldset': { borderColor: '#d45b15' },
+                                        paddingRight: '4px',
                                     },
                                     '& .MuiOutlinedInput-input': {
                                         color: 'white',
                                         fontSize: '12px',
-                                        padding: '4px 8px'
+                                        padding: '6px 8px',
+                                        // Style the numeric input arrows to be white
+                                        '&[type=number]::-webkit-inner-spin-button, &[type=number]::-webkit-outer-spin-button': {
+                                            WebkitAppearance: 'auto',
+                                            opacity: 1,
+                                            filter: 'invert(1)',
+                                        },
                                     }
                                 }}
                                 inputProps={{ min: 0, step: 0.01 }}
+                                InputProps={{
+                                    endAdornment: (
+                                        <InputAdornment position="end">
+                                            <Box sx={{ display: 'flex', gap: '2px' }}>
+                                                <IconButton
+                                                    size="small"
+                                                    onClick={() => handleSaveEdit(category)}
+                                                    disabled={editBidValue <= 0}
+                                                    sx={{
+                                                        padding: '4px',
+                                                        color: '#4caf50',
+                                                        '&:hover': { backgroundColor: 'rgba(76, 175, 80, 0.1)' },
+                                                        '&:disabled': { color: '#666' }
+                                                    }}
+                                                >
+                                                    <SaveIcon sx={{ fontSize: '16px' }} />
+                                                </IconButton>
+                                                <IconButton
+                                                    size="small"
+                                                    onClick={handleCancelEdit}
+                                                    sx={{
+                                                        padding: '4px',
+                                                        color: '#ff6b6b',
+                                                        '&:hover': { backgroundColor: 'rgba(255, 107, 107, 0.1)' }
+                                                    }}
+                                                >
+                                                    <CancelIcon sx={{ fontSize: '16px' }} />
+                                                </IconButton>
+                                            </Box>
+                                        </InputAdornment>
+                                    ),
+                                }}
                             />
-                            <IconButton
-                                size="small"
-                                onClick={() => handleSaveEdit(keyword)}
-                                disabled={editBidValue <= 0}
-                                sx={{
-                                    color: '#4caf50',
-                                    '&:hover': { backgroundColor: 'rgba(76, 175, 80, 0.1)' },
-                                    '&:disabled': { color: '#666' }
-                                }}
-                            >
-                                <SaveIcon fontSize="small" />
-                            </IconButton>
-                            <IconButton
-                                size="small"
-                                onClick={handleCancelEdit}
-                                sx={{
-                                    color: '#ff6b6b',
-                                    '&:hover': { backgroundColor: 'rgba(255, 107, 107, 0.1)' }
-                                }}
-                            >
-                                <CancelIcon fontSize="small" />
-                            </IconButton>
                         </Box>
                     );
                 }
 
                 return (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <Chip
-                            label={`$${row.bid.toFixed(2)}`}
+                            label={
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    {`$${row.bid.toFixed(2)}`}
+                                    <EditIcon
+                                        fontSize="small"
+                                        sx={{
+                                            fontSize: '14px',
+                                            cursor: 'pointer',
+                                            '&:hover': { opacity: 0.8 }
+                                        }}
+                                    />
+                                </Box>
+                            }
+                            onClick={() => handleStartEdit(category, row.bid)}
                             size="small"
                             sx={{
                                 backgroundColor: '#d45b15',
                                 color: 'white',
-                                fontWeight: 'bold'
-                            }}
-                        />
-                        <IconButton
-                            size="small"
-                            onClick={() => handleStartEdit(keyword, row.bid)}
-                            sx={{
-                                color: '#ccc',
+                                fontWeight: 'bold',
+                                cursor: 'pointer',
                                 '&:hover': {
-                                    backgroundColor: 'rgba(212, 91, 21, 0.1)',
-                                    color: '#d45b15'
+                                    backgroundColor: '#b34711'
                                 }
                             }}
-                        >
-                            <EditIcon fontSize="small" />
-                        </IconButton>
+                        />
                     </Box>
                 );
             },
             align: 'center' as const
         },
         {
-            id: 'actions',
-            label: 'Actions',
-            render: (row: KeywordBid) => (
-                <IconButton
-                    onClick={() => onDeleteKeyword(row.advertising_categories?.keyword_string || String(row.advertising_category_id))}
-                    sx={{
-                        color: '#ff6b6b',
-                        '&:hover': {
-                            backgroundColor: 'rgba(255, 107, 107, 0.1)',
-                            color: '#ff5252'
+            id: 'active',
+            label: 'Active',
+            render: (row: CategoryBid) => (
+                <Switch
+                    checked={row.active}
+                    onChange={(e) => {
+                        const category = row.advertising_categories?.category_string || String(row.advertising_category_id);
+                        if (e.target.checked) {
+                            onUpdateBid(category, row.bid);
+                        } else {
+                            onDeleteCategory(category);
                         }
                     }}
-                >
-                    <CloseIcon />
-                </IconButton>
+                    sx={{
+                        '& .MuiSwitch-switchBase.Mui-checked': {
+                            color: '#d45b15',
+                            '&:hover': {
+                                backgroundColor: 'rgba(212, 91, 21, 0.08)',
+                            },
+                        },
+                        '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                            backgroundColor: '#d45b15',
+                        },
+                    }}
+                />
             ),
             align: 'center' as const
         }
@@ -447,12 +596,21 @@ function KeywordBidManager({
         },
         '& .MuiInputLabel-root': {
             color: '#ccc',
+            fontSize: '14px',
             '&.Mui-focused': {
                 color: '#d45b15'
             }
         },
         '& .MuiOutlinedInput-input': {
-            color: 'white'
+            color: 'white',
+            fontSize: '14px',
+            height: '10px',
+            // Style the numeric input arrows to be white
+            '&[type=number]::-webkit-inner-spin-button, &[type=number]::-webkit-outer-spin-button': {
+                WebkitAppearance: 'auto',
+                opacity: 1,
+                filter: 'invert(1)',
+            },
         }
     };
 
@@ -464,11 +622,11 @@ function KeywordBidManager({
             padding: '20px',
             marginTop: '20px'
         }}>
-            <Typography variant="h6" sx={{ color: 'white', marginBottom: '20px' }}>
-                Keywords & Bidding
+            <Typography variant="h6" sx={{ fontSize: '14px', color: 'white', marginBottom: '20px' }}>
+                Categories & Bidding
             </Typography>
 
-            {/* Add Keyword Section */}
+            {/* Add Category Section */}
             <Box sx={{
                 backgroundColor: '#1a1a1a',
                 borderRadius: '8px',
@@ -476,20 +634,19 @@ function KeywordBidManager({
                 padding: '16px',
                 marginBottom: '20px'
             }}>
-                <Typography variant="subtitle1" sx={{ color: 'white', marginBottom: '12px' }}>
-                    Add New Keyword
+                <Typography variant="subtitle1" sx={{ fontSize: '14px', color: 'white', marginBottom: '12px' }}>
+                    Add New Category
                 </Typography>
                 {loading ? (
                     <Box sx={loadingBoxStyle} />
                 ) : (
                     <Box sx={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                         <TextField
-                            label="Keyword"
-                            variant="outlined"
-                            value={keywordInput}
-                            onChange={(e) => onKeywordInputChange(e.target.value)}
+                            label="Category"
+                            value={categoryInput}
+                            onChange={(e) => onCategoryInputChange(e.target.value)}
                             fullWidth
-                            placeholder="Enter keyword (e.g., 'cancer treatment')"
+                            placeholder="Enter category (e.g., 'cancer treatment')"
                             sx={textFieldStyle}
                         />
                         <TextField
@@ -500,7 +657,7 @@ function KeywordBidManager({
                             onChange={(e) => onBidInputChange(parseFloat(e.target.value) || 0)}
                             onKeyPress={(e) => {
                                 if (e.key === 'Enter') {
-                                    onAddKeyword();
+                                    onAddCategory();
                                 }
                             }}
                             placeholder="0.00"
@@ -511,11 +668,12 @@ function KeywordBidManager({
                             }}
                         />
                         <Button
-                            onClick={onAddKeyword}
-                            disabled={!keywordInput.trim() || bidInput <= 0}
+                            onClick={onAddCategory}
+                            disabled={!categoryInput.trim() || bidInput <= 0}
                             sx={{
                                 backgroundColor: '#d45b15',
                                 color: 'white',
+                                fontSize: '14px',
                                 '&:hover': {
                                     backgroundColor: '#b34711',
                                 },
@@ -524,7 +682,7 @@ function KeywordBidManager({
                                     color: '#999'
                                 },
                                 minWidth: '100px',
-                                height: '56px',
+                                height: '42px',
                                 fontWeight: 'bold'
                             }}
                         >
@@ -534,10 +692,10 @@ function KeywordBidManager({
                 )}
             </Box>
 
-            {/* Keywords Table */}
+            {/* Categories Table */}
             <Box>
-                <Typography variant="subtitle1" sx={{ color: 'white', marginBottom: '12px' }}>
-                    Current Keywords {loading ? '' : `(${categories.length})`}
+                <Typography variant="subtitle1" sx={{ fontSize: '14px', color: 'white', marginBottom: '12px' }}>
+                    Current Categories {loading ? '' : `(${categories.length})`}
                 </Typography>
                 {loading ? (
                     <Box sx={{
@@ -564,13 +722,13 @@ function KeywordBidManager({
                         border: '1px solid #444'
                     }}>
                         <Typography sx={{ color: '#888', fontSize: '16px' }}>
-                            No keywords added yet. Add your first keyword above to get started.
+                            No categories added yet. Add your first category above to get started.
                         </Typography>
                     </Box>
                 ) : (
-                    <GenericTable<KeywordBid>
+                    <GenericTable<CategoryBid>
                         data={categories}
-                        columns={keywordColumns}
+                        columns={categoryColumns}
                     />
                 )}
             </Box>
@@ -580,7 +738,7 @@ function KeywordBidManager({
 
 export default function EditCampaignPage({ params }: { params: { campaignId: string } }) {
     const router = useRouter();
-    const { updateCampaign } = useAdvertiser();
+    const { updateCampaign, activeAdvertiser } = useAdvertiser();
     const [campaign, setCampaign] = useState<Campaign | null>(null);
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
@@ -588,10 +746,15 @@ export default function EditCampaignPage({ params }: { params: { campaignId: str
     const [isActive, setIsActive] = useState(false);
     const [budget, setBudget] = useState<number>(0);
     const [loading, setLoading] = useState(true);
-    const [keywordInput, setKeywordInput] = useState<string>('');
+    const [categoryInput, setcategoryInput] = useState<string>('');
     const [bidInput, setBidInput] = useState<number>(0);
-    const [categories, setCategories] = useState<KeywordBid[]>([]);
+    const [categories, setCategories] = useState<CategoryBid[]>([]);
     const [isClosing, setIsClosing] = useState(false);
+
+    // Track original values for comparison
+    const [originalName, setOriginalName] = useState('');
+    const [originalDescription, setOriginalDescription] = useState('');
+    const [originalProductUrl, setOriginalProductUrl] = useState('');
 
     // Snackbar state
     const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -623,6 +786,11 @@ export default function EditCampaignPage({ params }: { params: { campaignId: str
                 setProductUrl(campaignData.product_url || '');
                 setIsActive(campaignData.active);
                 setBudget(campaignData.budget || 0);
+
+                // Set original values for comparison
+                setOriginalName(campaignData.treatment_name);
+                setOriginalDescription(campaignData.description);
+                setOriginalProductUrl(campaignData.product_url || '');
 
                 // Fetch associated categories
                 const categoriesResponse = await axios.get(`/api/advertisers/campaigns/${params.campaignId}/categories`);
@@ -659,6 +827,15 @@ export default function EditCampaignPage({ params }: { params: { campaignId: str
                 [fieldName]: value,
             });
 
+            // Update original values after successful save
+            if (fieldName === 'treatment_name') {
+                setOriginalName(value);
+            } else if (fieldName === 'description') {
+                setOriginalDescription(value);
+            } else if (fieldName === 'product_url') {
+                setOriginalProductUrl(value);
+            }
+
             showSnackbar(`${fieldName} updated successfully!`, 'success');
         } catch (error) {
             console.error(`Error updating ${fieldName}:`, error);
@@ -671,16 +848,16 @@ export default function EditCampaignPage({ params }: { params: { campaignId: str
         await handleUpdateCampaignField('active', newIsActive);
     };
 
-    const handleAddKeyword = async () => {
-        const trimmedKeyword = keywordInput.trim();
-        const keywordExists = categories.some(kb =>
-            kb.advertising_categories?.keyword_string === trimmedKeyword
+    const handleAddCategory = async () => {
+        const trimmedCategory = categoryInput.trim();
+        const categoryExists = categories.some(kb =>
+            kb.advertising_categories?.category_string === trimmedCategory
         );
 
-        if (trimmedKeyword !== '' && bidInput > 0 && !keywordExists) {
+        if (trimmedCategory !== '' && bidInput > 0 && !categoryExists) {
             try {
-                await axios.put(`/api/advertisers/campaigns/${params.campaignId}/categories`, {
-                    categoryName: trimmedKeyword,
+                await axios.post(`/api/advertisers/campaigns/${params.campaignId}/categories`, {
+                    categoryName: trimmedCategory,
                     bidAmount: bidInput,
                     active: true,
                 });
@@ -689,27 +866,27 @@ export default function EditCampaignPage({ params }: { params: { campaignId: str
                 const categoriesResponse = await axios.get(`/api/advertisers/campaigns/${params.campaignId}/categories`);
                 setCategories(categoriesResponse.data.categories);
 
-                setKeywordInput('');
+                setcategoryInput('');
                 setBidInput(0);
-                showSnackbar(`Keyword "${trimmedKeyword}" added successfully!`, 'success');
+                showSnackbar(`Category "${trimmedCategory}" added successfully!`, 'success');
             } catch (error: any) {
-                console.error('Error adding keyword:', error);
-                const errorMessage = error.response?.data?.error || 'Error adding keyword.';
+                console.error('Error adding category:', error);
+                const errorMessage = error.response?.data?.error || 'Error adding category.';
                 showSnackbar(errorMessage, 'error');
             }
-        } else if (trimmedKeyword === '') {
-            showSnackbar('Keyword cannot be empty.', 'error');
+        } else if (trimmedCategory === '') {
+            showSnackbar('Category cannot be empty.', 'error');
         } else if (bidInput <= 0) {
             showSnackbar('Bid amount must be greater than 0.', 'error');
-        } else if (keywordExists) {
-            showSnackbar('Keyword already exists.', 'error');
+        } else if (categoryExists) {
+            showSnackbar('Category already exists.', 'error');
         }
     };
 
-    const handleDeleteKeyword = async (keywordToDelete: string) => {
+    const handleDeleteCategory = async (categoryToDelete: string) => {
         try {
             await axios.put(`/api/advertisers/campaigns/${params.campaignId}/categories`, {
-                categoryName: keywordToDelete,
+                categoryName: categoryToDelete,
                 active: false,
             });
 
@@ -717,18 +894,18 @@ export default function EditCampaignPage({ params }: { params: { campaignId: str
             const categoriesResponse = await axios.get(`/api/advertisers/campaigns/${params.campaignId}/categories`);
             setCategories(categoriesResponse.data.categories);
 
-            showSnackbar(`Keyword "${keywordToDelete}" removed successfully!`, 'success');
+            showSnackbar(`Category "${categoryToDelete}" removed successfully!`, 'success');
         } catch (error: any) {
-            console.error('Error deleting keyword:', error);
-            const errorMessage = error.response?.data?.error || 'Error removing keyword.';
+            console.error('Error deleting category:', error);
+            const errorMessage = error.response?.data?.error || 'Error removing category.';
             showSnackbar(errorMessage, 'error');
         }
     };
 
-    const handleUpdateBid = async (keyword: string, newBid: number) => {
+    const handleUpdateBid = async (category: string, newBid: number) => {
         try {
             await axios.put(`/api/advertisers/campaigns/${params.campaignId}/categories`, {
-                categoryName: keyword,
+                categoryName: category,
                 bidAmount: newBid,
                 active: true,
             });
@@ -737,7 +914,7 @@ export default function EditCampaignPage({ params }: { params: { campaignId: str
             const categoriesResponse = await axios.get(`/api/advertisers/campaigns/${params.campaignId}/categories`);
             setCategories(categoriesResponse.data.categories);
 
-            showSnackbar(`Bid for "${keyword}" updated to $${newBid.toFixed(2)}!`, 'success');
+            showSnackbar(`Bid for "${category}" updated to $${newBid.toFixed(2)}!`, 'success');
         } catch (error: any) {
             console.error('Error updating bid:', error);
             const errorMessage = error.response?.data?.error || 'Error updating bid amount.';
@@ -748,8 +925,15 @@ export default function EditCampaignPage({ params }: { params: { campaignId: str
     const saveButtonSx = {
         backgroundColor: '#d45b15',
         color: 'white',
+        fontSize: '14px',
+        height: '42px',
         '&:hover': {
             backgroundColor: '#b34711',
+        },
+        '&:disabled': {
+            backgroundColor: '#555',
+            color: '#999',
+            cursor: 'not-allowed'
         },
         ml: 1,
     };
@@ -789,11 +973,22 @@ export default function EditCampaignPage({ params }: { params: { campaignId: str
         >
             <Container maxWidth="lg" style={{ marginTop: '20px' }}>
                 <EditCampaignHeader onClose={handleClose} />
+                <AdPreview
+                    name={name}
+                    description={description}
+                    productUrl={productUrl}
+                    campaignId={params.campaignId}
+                    companyName={activeAdvertiser?.name || 'Company'}
+                    loading={loading}
+                />
                 <CampaignDetailsForm
                     name={name}
                     description={description}
                     productUrl={productUrl}
                     isActive={isActive}
+                    originalName={originalName}
+                    originalDescription={originalDescription}
+                    originalProductUrl={originalProductUrl}
                     onNameChange={setName}
                     onDescriptionChange={setDescription}
                     onProductUrlChange={setProductUrl}
@@ -802,19 +997,23 @@ export default function EditCampaignPage({ params }: { params: { campaignId: str
                     saveButtonSx={saveButtonSx}
                     loading={loading}
                 />
-
-                <KeywordBidManager
-                    keywordInput={keywordInput}
+                <CategoryBidManager
+                    categoryInput={categoryInput}
                     bidInput={bidInput}
                     categories={categories}
-                    onKeywordInputChange={setKeywordInput}
+                    onCategoryInputChange={setcategoryInput}
                     onBidInputChange={setBidInput}
-                    onAddKeyword={handleAddKeyword}
-                    onDeleteKeyword={handleDeleteKeyword}
+                    onAddCategory={handleAddCategory}
+                    onDeleteCategory={handleDeleteCategory}
                     onUpdateBid={handleUpdateBid}
                     loading={loading}
                 />
-                <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleCloseSnackbar}>
+                <Snackbar
+                    open={snackbarOpen}
+                    autoHideDuration={6000}
+                    onClose={handleCloseSnackbar}
+                    anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+                >
                     <Alert onClose={handleCloseSnackbar} severity={snackbarSeverity} sx={{ width: '100%' }}>
                         {snackbarMessage}
                     </Alert>
@@ -822,102 +1021,4 @@ export default function EditCampaignPage({ params }: { params: { campaignId: str
             </Container>
         </Box>
     );
-}
-
-interface TimeFilterProps {
-    selectedFilter: string;
-    setSelectedFilter: (filter: string) => void;
-}
-
-function TimeFilter({ selectedFilter, setSelectedFilter }: TimeFilterProps) {
-    const menuItemStyle = {
-        backgroundColor: '#1a1a1a',
-        color: 'white',
-        fontSize: '14px',
-        padding: '12px 16px',
-        '&:hover': {
-            backgroundColor: '#333',
-        },
-        '&.Mui-selected': {
-            backgroundColor: '#d45b15',
-            '&:hover': {
-                backgroundColor: '#d45b15',
-            }
-        }
-    };
-
-    return (
-        <Box sx={{
-            margin: '0 auto 20px auto',
-            backgroundColor: '#1a1a1a',
-            padding: '16px 20px',
-            borderRadius: '8px',
-            border: '1px solid #333',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '16px'
-        }}>
-            <Typography
-                style={{
-                    color: 'white',
-                    fontSize: '18px',
-                    fontWeight: 'bold',
-                    minWidth: 'fit-content'
-                }}
-            >
-                Campaign Performance
-            </Typography>
-            <FormControl sx={{ minWidth: 200 }}>
-                <Select
-                    labelId="filter-select-label"
-                    id="filter-select"
-                    value={selectedFilter}
-                    sx={{
-                        color: 'white',
-                        fontSize: '14px',
-                        height: '42px',
-                        '& .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#333',
-                            borderWidth: '1px'
-                        },
-                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#d45b15',
-                            borderWidth: '2px'
-                        },
-                        '&:hover .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#d45b15',
-                        },
-                        '.MuiSvgIcon-root': {
-                            fill: "white !important",
-                            fontSize: '20px'
-                        },
-                        '& .MuiSelect-select': {
-                            paddingTop: '12px',
-                            paddingBottom: '12px'
-                        }
-                    }}
-                    onChange={(event: SelectChangeEvent) => {
-                        setSelectedFilter(event.target.value);
-                    }}
-                    MenuProps={{
-                        PaperProps: {
-                            sx: {
-                                backgroundColor: '#1a1a1a',
-                                border: '1px solid #333',
-                                borderRadius: '8px',
-                                marginTop: '4px'
-                            }
-                        }
-                    }}
-                >
-                    <MenuItem value={FILTER_DURATION_24_HRS} sx={menuItemStyle}>{FILTER_DURATION_24_HRS}</MenuItem>
-                    <MenuItem value={FILTER_DURATION_7_DAYS} sx={menuItemStyle}>{FILTER_DURATION_7_DAYS}</MenuItem>
-                    <MenuItem value={FILTER_DURATION_30_DAYS} sx={menuItemStyle}>{FILTER_DURATION_30_DAYS}</MenuItem>
-                    <MenuItem value={FILTER_DURATION_1_YEAR} sx={menuItemStyle}>{FILTER_DURATION_1_YEAR}</MenuItem>
-                    <MenuItem value={FILTER_DURATION_ALL_TIME} sx={menuItemStyle}>{FILTER_DURATION_ALL_TIME}</MenuItem>
-                </Select>
-            </FormControl>
-        </Box>
-    )
 }
