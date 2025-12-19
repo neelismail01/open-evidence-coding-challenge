@@ -11,6 +11,7 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import GenericTable from '../../../components/GenericTable';
 import AdvertisementCard from '../../../components/AdvertisementCard';
 import { useAdvertiser } from '../../../contexts/AdvertiserContext';
+import { FullScreenSlideOverlay } from '@/components';
 
 interface Campaign {
     id: number;
@@ -749,7 +750,6 @@ export default function EditCampaignPage({ params }: { params: { campaignId: str
     const [categoryInput, setcategoryInput] = useState<string>('');
     const [bidInput, setBidInput] = useState<number>(0);
     const [categories, setCategories] = useState<CategoryBid[]>([]);
-    const [isClosing, setIsClosing] = useState(false);
 
     // Track original values for comparison
     const [originalName, setOriginalName] = useState('');
@@ -809,10 +809,7 @@ export default function EditCampaignPage({ params }: { params: { campaignId: str
     }, [params.campaignId]);
 
     const handleClose = () => {
-        setIsClosing(true);
-        setTimeout(() => {
-            router.push('/advertiser');
-        }, 300);
+        router.push('/advertiser');
     };
 
     const handleUpdateCampaignField = async (fieldName: string, value: any) => {
@@ -939,37 +936,12 @@ export default function EditCampaignPage({ params }: { params: { campaignId: str
     };
 
     return (
-        <Box
-            sx={{
-                position: 'fixed',
-                top: 0,
-                right: 0,
-                bottom: 0,
-                left: 0,
-                backgroundColor: '#121212',
-                animation: isClosing
-                    ? 'slideOutToRight 0.1s ease-out forwards'
-                    : 'slideInFromRight 0.1s ease-out forwards',
-                '@keyframes slideInFromRight': {
-                    '0%': {
-                        transform: 'translateX(100%)',
-                    },
-                    '100%': {
-                        transform: 'translateX(0)',
-                    },
-                },
-                '@keyframes slideOutToRight': {
-                    '0%': {
-                        transform: 'translateX(0)',
-                    },
-                    '100%': {
-                        transform: 'translateX(100%)',
-                    },
-                },
-                p: 4,
-                zIndex: 1200,
-                overflow: 'auto',
-            }}
+        <FullScreenSlideOverlay
+            isOpen={true}
+            onClose={handleClose}
+            title="Edit Campaign"
+            closeRoute="/advertiser"
+            animationDuration={100}
         >
             <Container maxWidth="lg" style={{ marginTop: '20px' }}>
                 <EditCampaignHeader onClose={handleClose} />
@@ -1019,6 +991,6 @@ export default function EditCampaignPage({ params }: { params: { campaignId: str
                     </Alert>
                 </Snackbar>
             </Container>
-        </Box>
+        </FullScreenSlideOverlay>
     );
 }

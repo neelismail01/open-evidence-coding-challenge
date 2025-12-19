@@ -289,4 +289,6 @@ const GenericTable = forwardRef(
     );
 }) as <T>(props: GenericTableProps<T> & { ref?: React.Ref<HTMLDivElement> }) => React.ReactElement;
 
+GenericTable.displayName = 'GenericTable';
+
 export default GenericTable;
