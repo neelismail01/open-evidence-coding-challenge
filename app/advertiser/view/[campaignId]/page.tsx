@@ -15,6 +15,7 @@ import {
     FILTER_DURATION_30_DAYS,
     FILTER_DURATION_ALL_TIME
 } from '../../../../utils/constants';
+import { getStartAndEndDatesFromFilter } from '@/lib/utils/dateUtils';
 
 interface Campaign {
     id: number;
@@ -75,33 +76,6 @@ export default function ViewCampaignPage({ params }: { params: { campaignId: str
     // Categories state
     const [categories, setCategories] = useState<Category[]>([]);
     const [categoriesLoading, setCategoriesLoading] = useState<boolean>(false);
-
-    function getStartAndEndDatesFromFilter(filter: string): [string | null, string | null] {
-        const now = new Date();
-        let startDate: Date | null = null;
-        let endDate: Date | null = now;
-
-        switch (filter) {
-            case FILTER_DURATION_24_HRS:
-                startDate = new Date(now.getTime() - (24 * 60 * 60 * 1000));
-                break;
-            case FILTER_DURATION_7_DAYS:
-                startDate = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
-                break;
-            case FILTER_DURATION_30_DAYS:
-                startDate = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
-                break;
-            case FILTER_DURATION_1_YEAR:
-                startDate = new Date(now.getTime() - (365 * 24 * 60 * 60 * 1000));
-                break;
-            case FILTER_DURATION_ALL_TIME:
-                return [null, null];
-            default:
-                return [null, null];
-        }
-
-        return [startDate ? startDate.toISOString() : null, endDate ? endDate.toISOString() : null];
-    }
 
     async function fetchCampaignAnalytics(campaignId: string, startDate: string | null, endDate: string | null) {
         try {

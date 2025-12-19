@@ -19,6 +19,7 @@ import {
 import GenericTable from '../components/GenericTable';
 import StatsLineChart from '../components/StatsLineChart';
 import { useAdvertiser } from '../contexts/AdvertiserContext';
+import { getStartAndEndDatesFromFilter } from '@/lib/utils/dateUtils';
 
 const loadingBoxStyle = {
     width: '100%',
@@ -43,35 +44,6 @@ interface Advertiser {
     id: number;
     name: string;
 }
-
-function getStartAndEndDatesFromFilter(filter: string): [string | null, string | null] {
-    const now = new Date();
-    let startDate: Date | null = null;
-    let endDate: Date | null = now; // End date is always now, unless filter is 'All Time'
-
-    switch (filter) {
-        case FILTER_DURATION_24_HRS:
-            startDate = new Date(now.getTime() - (24 * 60 * 60 * 1000));
-            break;
-        case FILTER_DURATION_7_DAYS:
-            startDate = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
-            break;
-        case FILTER_DURATION_30_DAYS:
-            startDate = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
-            break;
-        case FILTER_DURATION_1_YEAR:
-            startDate = new Date(now.getTime() - (365 * 24 * 60 * 60 * 1000));
-            break;
-        case FILTER_DURATION_ALL_TIME:
-            return [null, null]; // No date filtering
-        default:
-            return [null, null]; // Default to all time if filter is unrecognized
-    }
-
-    return [startDate ? startDate.toISOString() : null, endDate ? endDate.toISOString() : null];
-}
-
-
 
 export default function AdvertiserHome() {
     const router = useRouter();
