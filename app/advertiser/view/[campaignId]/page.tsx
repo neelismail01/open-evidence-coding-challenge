@@ -16,6 +16,8 @@ import {
     FILTER_DURATION_ALL_TIME
 } from '../../../../utils/constants';
 import { getStartAndEndDatesFromFilter } from '@/lib/utils/dateUtils';
+import { TimeFilter, MetricsGrid, FullScreenSlideOverlay } from '@/components';
+import type { TimeFilterOption } from '@/lib/types';
 
 interface Campaign {
     id: number;
@@ -64,7 +66,6 @@ export default function ViewCampaignPage({ params }: { params: { campaignId: str
     const router = useRouter();
     const [campaign, setCampaign] = useState<Campaign | null>(null);
     const [loading, setLoading] = useState(true);
-    const [isClosing, setIsClosing] = useState(false);
 
     // Analytics state
     const [selectedFilter, setSelectedFilter] = useState("Last 7 Days");
@@ -179,182 +180,48 @@ export default function ViewCampaignPage({ params }: { params: { campaignId: str
     }, [params.campaignId, selectedFilter]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const handleClose = () => {
-        setIsClosing(true);
-        setTimeout(() => {
-            router.push('/advertiser');
-        }, 300);
+        router.push('/advertiser');
     };
 
     return (
-            <Box
-                sx={{
-                    position: 'fixed',
-                    top: 0,
-                    right: 0,
-                    bottom: 0,
-                    left: 0,
-                    backgroundColor: '#121212',
-                    animation: isClosing
-                        ? 'slideOutToRight 0.1s ease-out forwards'
-                        : 'slideInFromRight 0.1s ease-out forwards',
-                    '@keyframes slideInFromRight': {
-                        '0%': {
-                            transform: 'translateX(100%)',
-                        },
-                        '100%': {
-                            transform: 'translateX(0)',
-                        },
-                    },
-                    '@keyframes slideOutToRight': {
-                        '0%': {
-                            transform: 'translateX(0)',
-                        },
-                        '100%': {
-                            transform: 'translateX(100%)',
-                        },
-                    },
-                    p: 4,
-                    zIndex: 1200,
-                    overflow: 'auto',
-                }}
-            >
-                {<Box
-                        style={{ margin: '20px auto' }}
-                    >
-                        <Container maxWidth="lg" style={{ marginTop: '20px' }}>
-                            <ViewCampaignHeader onClose={handleClose} />
+        <FullScreenSlideOverlay
+            isOpen={true}
+            onClose={handleClose}
+            title="Analytics"
+            closeRoute="/advertiser"
+            animationDuration={100}
+        >
 
                             {/* Campaign Analytics Section */}
                             <TimeFilter
-                                selectedFilter={selectedFilter}
-                                setSelectedFilter={setSelectedFilter}
+                                value={selectedFilter as TimeFilterOption}
+                                onChange={(filter) => setSelectedFilter(filter)}
+                                title="Campaign Performance"
                             />
 
                             {/* Summary Cards */}
-                            <Box sx={{ margin: '0 auto 20px auto', display: 'flex', gap: '20px' }}>
-                                {/* Total Impressions Card */}
-                                <Box
-                                    sx={{
-                                        flex: 1,
-                                        backgroundColor: '#1a1a1a',
-                                        padding: '20px',
-                                        borderRadius: '8px',
-                                        border: '1px solid #333',
-                                        textAlign: 'center'
-                                    }}
-                                >
-                                    <Typography variant="h6" style={{ color: 'white', marginBottom: '10px' }}>
-                                        Total Impressions
-                                    </Typography>
-                                    {analyticsLoading ? (
-                                        <Box sx={{
-                                            width: '150px',
-                                            height: '40px',
-                                            backgroundColor: '#1a1a1a',
-                                            borderRadius: 1,
-                                            margin: '0 auto',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center'
-                                        }}>
-                                            <Typography style={{ color: 'white', fontSize: '14px' }}>Loading...</Typography>
-                                        </Box>
-                                    ) : (
-                                        <Typography
-                                            variant="h4"
-                                            style={{
-                                                color: '#d45b15',
-                                                fontWeight: 'bold',
-                                                fontFamily: 'monospace'
-                                            }}
-                                        >
-                                            {totalImpressions.toLocaleString()}
-                                        </Typography>
-                                    )}
-                                </Box>
-
-                                {/* Total Spend Card */}
-                                <Box
-                                    sx={{
-                                        flex: 1,
-                                        backgroundColor: '#1a1a1a',
-                                        padding: '20px',
-                                        borderRadius: '8px',
-                                        border: '1px solid #333',
-                                        textAlign: 'center'
-                                    }}
-                                >
-                                    <Typography variant="h6" style={{ color: 'white', marginBottom: '10px' }}>
-                                        Total Spend
-                                    </Typography>
-                                    {analyticsLoading ? (
-                                        <Box sx={{
-                                            width: '150px',
-                                            height: '40px',
-                                            backgroundColor: '#1a1a1a',
-                                            borderRadius: 1,
-                                            margin: '0 auto',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center'
-                                        }}>
-                                            <Typography style={{ color: 'white', fontSize: '14px' }}>Loading...</Typography>
-                                        </Box>
-                                    ) : (
-                                        <Typography
-                                            variant="h4"
-                                            style={{
-                                                color: '#d45b15',
-                                                fontWeight: 'bold',
-                                                fontFamily: 'monospace'
-                                            }}
-                                        >
-                                            ${totalSpend.toFixed(2)}
-                                        </Typography>
-                                    )}
-                                </Box>
-
-                                {/* Aggregate CTR Card */}
-                                <Box
-                                    sx={{
-                                        flex: 1,
-                                        backgroundColor: '#1a1a1a',
-                                        padding: '20px',
-                                        borderRadius: '8px',
-                                        border: '1px solid #333',
-                                        textAlign: 'center'
-                                    }}
-                                >
-                                    <Typography variant="h6" style={{ color: 'white', marginBottom: '10px' }}>
-                                        Aggregate CTR
-                                    </Typography>
-                                    {analyticsLoading ? (
-                                        <Box sx={{
-                                            width: '150px',
-                                            height: '40px',
-                                            backgroundColor: '#1a1a1a',
-                                            borderRadius: 1,
-                                            margin: '0 auto',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center'
-                                        }}>
-                                            <Typography style={{ color: 'white', fontSize: '14px' }}>Loading...</Typography>
-                                        </Box>
-                                    ) : (
-                                        <Typography
-                                            variant="h4"
-                                            style={{
-                                                color: '#d45b15',
-                                                fontWeight: 'bold',
-                                                fontFamily: 'monospace'
-                                            }}
-                                        >
-                                            {aggregateCTR.toFixed(2)}%
-                                        </Typography>
-                                    )}
-                                </Box>
-                            </Box>
+                            <MetricsGrid
+                                metrics={[
+                                    {
+                                        title: 'Total Impressions',
+                                        value: totalImpressions,
+                                        formatter: (val) => val.toLocaleString(),
+                                        loading: analyticsLoading,
+                                    },
+                                    {
+                                        title: 'Total Spend',
+                                        value: totalSpend,
+                                        formatter: (val) => `$${val.toFixed(2)}`,
+                                        loading: analyticsLoading,
+                                    },
+                                    {
+                                        title: 'Aggregate CTR',
+                                        value: aggregateCTR,
+                                        formatter: (val) => `${val.toFixed(2)}%`,
+                                        loading: analyticsLoading,
+                                    },
+                                ]}
+                            />
 
                             <StatsLineChart
                                 selectedFilter={selectedFilter}
@@ -474,107 +341,7 @@ export default function ViewCampaignPage({ params }: { params: { campaignId: str
                                     isLoading={categoriesLoading}
                                 />
                             </Box>
-                        </Container>
-                    </Box>
-                }
-            </Box>
+        </FullScreenSlideOverlay>
     );
 }
 
-interface TimeFilterProps {
-    selectedFilter: string;
-    setSelectedFilter: (filter: string) => void;
-}
-
-function TimeFilter({ selectedFilter, setSelectedFilter }: TimeFilterProps) {
-    const menuItemStyle = {
-        backgroundColor: '#1a1a1a',
-        color: 'white',
-        fontSize: '14px',
-        padding: '12px 16px',
-        '&:hover': {
-            backgroundColor: '#333',
-        },
-        '&.Mui-selected': {
-            backgroundColor: '#d45b15',
-            '&:hover': {
-                backgroundColor: '#d45b15',
-            }
-        }
-    };
-
-    return (
-        <Box sx={{
-            margin: '0 auto 20px auto',
-            backgroundColor: '#1a1a1a',
-            padding: '16px 20px',
-            borderRadius: '8px',
-            border: '1px solid #333',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '16px'
-        }}>
-            <Typography
-                style={{
-                    color: 'white',
-                    fontSize: '18px',
-                    fontWeight: 'bold',
-                    minWidth: 'fit-content'
-                }}
-            >
-                Campaign Performance
-            </Typography>
-            <FormControl sx={{ minWidth: 200 }}>
-                <Select
-                    labelId="filter-select-label"
-                    id="filter-select"
-                    value={selectedFilter}
-                    sx={{
-                        color: 'white',
-                        fontSize: '14px',
-                        height: '42px',
-                        '& .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#333',
-                            borderWidth: '1px'
-                        },
-                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#d45b15',
-                            borderWidth: '2px'
-                        },
-                        '&:hover .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#d45b15',
-                        },
-                        '.MuiSvgIcon-root': {
-                            fill: "white !important",
-                            fontSize: '20px'
-                        },
-                        '& .MuiSelect-select': {
-                            paddingTop: '12px',
-                            paddingBottom: '12px'
-                        }
-                    }}
-                    onChange={(event: SelectChangeEvent) => {
-                        setSelectedFilter(event.target.value);
-                    }}
-                    MenuProps={{
-                        PaperProps: {
-                            sx: {
-                                backgroundColor: '#1a1a1a',
-                                border: '1px solid #333',
-                                borderRadius: '8px',
-                                marginTop: '4px'
-                            }
-                        }
-                    }}
-                >
-                    <MenuItem value={FILTER_DURATION_24_HRS} sx={menuItemStyle}>{FILTER_DURATION_24_HRS}</MenuItem>
-                    <MenuItem value={FILTER_DURATION_7_DAYS} sx={menuItemStyle}>{FILTER_DURATION_7_DAYS}</MenuItem>
-                    <MenuItem value={FILTER_DURATION_30_DAYS} sx={menuItemStyle}>{FILTER_DURATION_30_DAYS}</MenuItem>
-                    <MenuItem value={FILTER_DURATION_1_YEAR} sx={menuItemStyle}>{FILTER_DURATION_1_YEAR}</MenuItem>
-                    <MenuItem value={FILTER_DURATION_ALL_TIME} sx={menuItemStyle}>{FILTER_DURATION_ALL_TIME}</MenuItem>
-                </Select>
-            </FormControl>
-        </Box>
-    )
-}
