@@ -38,23 +38,24 @@ export const StyledButton = styled(Button)({
 export const StyledTextField = styled(TextField)({
   marginBottom: '20px',
   fontSize: '16px',
-  '& .MuiInputBase-root': {
-    color: 'white',
-  },
-  '& .MuiInputLabel-root': {
-    color: '#999',
-  },
   '& .MuiOutlinedInput-root': {
     '& fieldset': {
-      borderColor: '#636363',
+        borderColor: '#5c5b5b',
     },
     '&:hover fieldset': {
-      borderColor: '#d45b15',
+        borderColor: '#d45b15',
     },
     '&.Mui-focused fieldset': {
-      borderColor: '#d45b15',
+        borderColor: '#d45b15',
     },
-  },
+},
+'& .MuiInputLabel-root': {
+    color: '#ccc',
+    fontSize: '14px',
+    '&.Mui-focused': {
+        color: '#d45b15'
+    }
+},
 });
 
 export const StyledFormControl = styled(FormControl)({

@@ -243,6 +243,11 @@ export default function ViewCampaignPage({ params }: { params: { campaignId: str
                                     ? ((row.clicks || 0) / row.impressions * 100)
                                     : 0;
                                 return `${ctr.toFixed(2)}%`;
+                            },
+                            sortValue: (row: Category) => {
+                                return (row.impressions && row.impressions > 0)
+                                    ? ((row.clicks || 0) / row.impressions * 100)
+                                    : 0;
                             }
                         },
                         {
@@ -255,6 +260,11 @@ export default function ViewCampaignPage({ params }: { params: { campaignId: str
                                     ? ((row.impressions || 0) / row.matches * 100)
                                     : 0;
                                 return `${winRate.toFixed(2)}%`;
+                            },
+                            sortValue: (row: Category) => {
+                                return (row.matches && row.matches > 0)
+                                    ? ((row.impressions || 0) / row.matches * 100)
+                                    : 0;
                             }
                         },
                         {

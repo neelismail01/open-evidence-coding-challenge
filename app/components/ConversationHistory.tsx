@@ -1,7 +1,7 @@
 'use client';
 
 import { Box, Paper, Typography } from '@mui/material';
-import { styled } from '@mui/system';
+import { styled, keyframes } from '@mui/system';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import AdvertisementCard, { FoldedAdvertisementCard } from './AdvertisementCard';
@@ -83,6 +83,25 @@ const StyledAssistantPaper = styled(Paper)({
   }
 });
 
+const gradientFlow = keyframes`
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+`;
+
+const AnimatedThinkingText = styled(Typography)({
+  background: 'linear-gradient(90deg, #888888 0%, #ffffff 25%, #ffffff 50%, #888888 75%, #888888 100%)',
+  backgroundSize: '200% auto',
+  backgroundClip: 'text',
+  WebkitBackgroundClip: 'text',
+  WebkitTextFillColor: 'transparent',
+  animation: `${gradientFlow} 2s linear infinite`,
+  fontWeight: 500
+});
+
 interface ConversationHistoryProps {
   history: HistoryItem[];
   streamingContent?: string;
@@ -91,20 +110,10 @@ interface ConversationHistoryProps {
   currentAd?: Ad | null;
 }
 
-interface ConversationHistoryItemProps extends HistoryItem {
-  onAdClick?: (ad: Ad) => void;
-  onAdImpression?: (ad: Ad) => void;
-  showFullAd?: boolean;
-}
-
 function ConversationHistoryItem({
   role,
-  content,
-  ad,
-  onAdClick,
-  onAdImpression,
-  showFullAd
-}: ConversationHistoryItemProps) {
+  content
+}: HistoryItem) {
   if (role == 'user') {
     return (
       <Box display="flex" justifyContent="flex-end" marginTop="10px">
@@ -147,9 +156,6 @@ export default function ConversationHistory({
           <Box key={index}>
             <ConversationHistoryItem
               {...item}
-              onAdClick={onAdClick}
-              onAdImpression={onAdImpression}
-              showFullAd={showFullAd}
             />
             {/* Render ad right after user message */}
             {item.role === 'user' && item.ad && (
@@ -162,9 +168,9 @@ export default function ConversationHistory({
                       onAdClick={onAdClick}
                     />
                     <Box sx={{ textAlign: 'left', mt: 2 }}>
-                      <Typography color="white">
-                        Thinking about this response...
-                      </Typography>
+                      <AnimatedThinkingText>
+                        Thinking...
+                      </AnimatedThinkingText>
                     </Box>
                   </>
                 ) : (

@@ -92,7 +92,7 @@ export default function LoginPage() {
         </form>
         <Box sx={{ marginTop: '20px', textAlign: 'center' }}>
           <Typography sx={{ fontSize: '14px', color: 'white' }}>
-            Don't have an account?{' '}
+          {"Don't have an account?"}{' '}
             <Link
               href="/signup"
               sx={{

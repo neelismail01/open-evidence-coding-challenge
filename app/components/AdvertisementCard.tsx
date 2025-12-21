@@ -32,17 +32,16 @@ const StyledAdCard = styled(Paper)({
   color: 'white',
   borderRadius: '12px',
   cursor: 'pointer',
-  transition: 'background-color 0.2s',
-  '&:hover': {
-    backgroundColor: '#333',
-  },
 });
 
 const ExpandIcon = styled(IconButton)<{ expanded: boolean }>(({ expanded }) => ({
   color: 'white',
   transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
-  transition: 'transform 0.3s',
+  transition: 'transform 0.3s, background-color 0.2s',
   marginLeft: 'auto',
+  '&:hover': {
+    backgroundColor: '#333',
+  },
 }));
 
 interface AdvertisementCardProps {
@@ -81,7 +80,7 @@ function UnifiedAdvertisementCard({ ad, onAdClick, onAdImpression, initiallyExpa
       >
         <Box sx={{ flex: 1 }}>
           <Typography variant="caption" sx={{ color: '#999', fontSize: '0.7rem' }}>
-            Sponsored
+            Sponsored by {ad.campaigns.companies.name}
           </Typography>
           <Typography variant="body2" sx={{ fontWeight: 500, mt: 0.5 }}>
             {ad.campaigns.treatment_name}
@@ -108,17 +107,6 @@ function UnifiedAdvertisementCard({ ad, onAdClick, onAdImpression, initiallyExpa
           >
             View Prescribing Information
           </Button>
-          <Typography
-            variant="caption"
-            sx={{
-              display: 'block',
-              marginTop: '0.75rem',
-              color: '#999',
-              fontSize: '0.7rem',
-            }}
-          >
-            Sponsored by {ad.campaigns.companies.name}
-          </Typography>
         </Box>
       </Collapse>
     </StyledAdCard>

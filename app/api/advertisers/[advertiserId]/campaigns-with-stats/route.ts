@@ -35,7 +35,8 @@ export async function GET(
     const { data: campaigns, error: campaignsError } = await getRowsFromTable(
       SUPABASE_TABLE_NAME_CAMPAIGNS,
       {
-        filters: { company_id: parseInt(advertiserId) }
+        filters: { company_id: parseInt(advertiserId) },
+        orderBy: { column: 'treatment_name', ascending: true }
       }
     );
 
