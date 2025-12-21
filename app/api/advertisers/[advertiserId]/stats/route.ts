@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAdvertiserStatsOverTime } from '../../../../../utils/supabase_manager';
+import { getAdvertiserStatsOverTime } from '../../../../../server/supabase_manager';
 
 export async function GET(req: NextRequest, { params }: { params: { advertiserId: number } }) {
   try {

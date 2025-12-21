@@ -46,21 +46,6 @@ export interface UseCampaignAnalyticsReturn {
  *
  * @param options - Configuration options
  * @returns Analytics data and control functions
- *
- * @example
- * ```tsx
- * const { chartData, campaignData, loading, error } = useCampaignAnalytics({
- *   advertiserId: 123,
- *   campaignSpecific: false,
- *   startDate,
- *   endDate,
- * });
- *
- * if (loading) return <LoadingSpinner />;
- * if (error) return <ErrorMessage error={error} />;
- *
- * return <Chart data={chartData} />;
- * ```
  */
 export function useCampaignAnalytics(
   options: UseCampaignAnalyticsOptions

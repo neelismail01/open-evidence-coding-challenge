@@ -30,28 +30,12 @@ export interface UseTimeFilterReturn {
  *
  * @param initialFilter - Initial filter value (default: 'Last 7 Days')
  * @returns Time filter state and utilities
- *
- * @example
- * ```tsx
- * const { selectedFilter, setSelectedFilter, startDate, endDate } = useTimeFilter();
- *
- * // Use in a Select component
- * <Select value={selectedFilter} onChange={(e) => setSelectedFilter(e.target.value)}>
- *   {TIME_FILTER_OPTIONS.map(option => (
- *     <MenuItem value={option}>{option}</MenuItem>
- *   ))}
- * </Select>
- *
- * // Use dates in API calls
- * fetchData(startDate, endDate);
- * ```
  */
 export function useTimeFilter(
   initialFilter: TimeFilterOption = DEFAULT_TIME_FILTER
 ): UseTimeFilterReturn {
   const [selectedFilter, setSelectedFilter] = useState<TimeFilterOption>(initialFilter);
 
-  // Memoize date range calculation
   const dateRange = useMemo(
     () => getStartAndEndDatesFromFilter(selectedFilter),
     [selectedFilter]

@@ -449,7 +449,7 @@ export default function StatsLineChart({ selectedFilter, isLoading = false, adve
                         border: '1px solid #333'
                     }}
                 >
-                    <Bar data={campaignSpecific ? top5CategoryImpressionsData : top5ImpressionsData} options={getBarChartOptions(campaignSpecific ? 'Top Categories by Impressions' : 'Top Categories by Impressions')} />
+                    <Bar data={campaignSpecific ? top5CategoryImpressionsData : top5ImpressionsData} options={getBarChartOptions(campaignSpecific ? 'Top Categories by Impressions' : 'Top Campaigns by Impressions')} />
                 </Box>
                 {!campaignSpecific && (
                     <Box
@@ -508,8 +508,8 @@ export default function StatsLineChart({ selectedFilter, isLoading = false, adve
                     </Box>
                 )}
             </Box>
-                        {/* Spend charts */}
-                        <Box sx={{ display: 'flex', gap: '20px', marginBottom: '20px' }}>
+                    {/* Spend charts */}
+                    <Box sx={{ display: 'flex', gap: '20px', marginBottom: '20px' }}>
                 <Box
                     sx={{
                         flex: 1,

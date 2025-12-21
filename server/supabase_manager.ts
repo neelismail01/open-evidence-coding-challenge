@@ -6,11 +6,11 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 type FilterOptions = {
   filters?: Record<string, any>;
-  inFilters?: Record<string, any[]>; // New: for 'in' operator
+  inFilters?: Record<string, any[]>;
   limit?: number;
   orderBy?: { column: string; ascending?: boolean };
-  selectString?: string; // New: for custom select queries including joins
-  dateRange?: { column: string, from: string, to: string }; // New: for date range filters
+  selectString?: string;
+  dateRange?: { column: string, from: string, to: string };
 };
 
 export async function getRowsFromTable<T>(
@@ -26,13 +26,13 @@ export async function getRowsFromTable<T>(
     });
   }
 
-  if (options?.inFilters) { // New: handle 'in' filters
+  if (options?.inFilters) {
     Object.entries(options.inFilters).forEach(([key, value]) => {
       query = query.in(key, value);
     });
   }
 
-  if (options?.dateRange) { // New: handle date range filters
+  if (options?.dateRange) {
     query = query.gte(options.dateRange.column, options.dateRange.from);
     query = query.lte(options.dateRange.column, options.dateRange.to);
   }
@@ -48,7 +48,7 @@ export async function getRowsFromTable<T>(
   }
 
   const { data: rawData, error } = await query;
-  const typedData: T[] | null = rawData as T[] | null; // Explicitly cast to T[] | null
+  const typedData: T[] | null = rawData as T[] | null;
   return { data: typedData, error };
 }
 
@@ -72,7 +72,11 @@ export async function insertRowsToTable(tableName: string, rows: any[]) {
   }
 }
 
-export async function updateRowInTable(tableName: string, rowId: number, updatedData: any) {
+export async function updateRowInTable(
+  tableName: string,
+  rowId: number,
+  updatedData: any
+) {
   try {
     const { data, error } = await supabase
       .from(tableName)
@@ -93,7 +97,11 @@ export async function updateRowInTable(tableName: string, rowId: number, updated
   }
 }
 
-export async function updateRowsInTable(tableName: string, updatedData: any, filters: Record<string, any>) {
+export async function updateRowsInTable(
+  tableName: string,
+  updatedData: any,
+  filters: Record<string, any>
+) {
   try {
     let query = supabase.from(tableName).update(updatedData);
     Object.entries(filters).forEach(([key, value]) => {
@@ -298,9 +306,6 @@ export async function getAdvertiserStatsOverTime(
   end_date?: string | null
 ) {
   try {
-    // For now, we'll use a simpler approach by querying the database directly
-    // since we might not have the RPC functions for date grouping yet
-
     // Get all campaigns for this company
     const { data: campaigns, error: campaignsError } = await getRowsFromTable('campaigns', {
       filters: { company_id: company_id, active: true }
@@ -382,8 +387,6 @@ export async function getAdvertiserStatsOverTime(
           statsMap.set(date, { date, impressions: 0, clicks: 0, spend: 0 });
         }
         statsMap.get(date).clicks++;
-        // Add click cost (bid amount)
-        statsMap.get(date).spend += (click.bid || 0);
       });
     }
 
@@ -409,10 +412,10 @@ export async function getAdvertiserStatsOverTime(
     // Count impressions by campaign
     if (impressions) {
       impressions.forEach((impression: any) => {
-        const campaignCategory = campaignCategories.find((cc: any) => cc.id === impression.campaign_category_id);
+        const campaignCategory = campaignCategories.find((cc: any) => cc.id === impression.campaign_category_id) as any;
         if (campaignCategory && campaignStats.has(campaignCategory.campaign_id)) {
-          campaignStats.get(campaignCategory.campaign_id).impressions++;
-          campaignStats.get(campaignCategory.campaign_id).spend += (impression.bid || 0);
+          campaignStats.get(campaignCategory.campaign_id)!.impressions++;
+          campaignStats.get(campaignCategory.campaign_id)!.spend += (impression.bid || 0);
         }
       });
     }
@@ -420,10 +423,9 @@ export async function getAdvertiserStatsOverTime(
     // Count clicks by campaign
     if (clicks) {
       clicks.forEach((click: any) => {
-        const campaignCategory = campaignCategories.find((cc: any) => cc.id === click.campaign_category_id);
+        const campaignCategory = campaignCategories.find((cc: any) => cc.id === click.campaign_category_id) as any;
         if (campaignCategory && campaignStats.has(campaignCategory.campaign_id)) {
-          campaignStats.get(campaignCategory.campaign_id).clicks++;
-          campaignStats.get(campaignCategory.campaign_id).spend += (click.bid || 0);
+          campaignStats.get(campaignCategory.campaign_id)!.clicks++;
         }
       });
     }
@@ -460,10 +462,10 @@ export async function getAdvertiserStatsOverTime(
     // Count impressions by category
     if (impressions && advertisingCategories) {
       impressions.forEach((impression: any) => {
-        const campaignCategory = campaignCategories.find((cc: any) => cc.id === impression.campaign_category_id);
+        const campaignCategory = campaignCategories.find((cc: any) => cc.id === impression.campaign_category_id) as any;
         if (campaignCategory && categoryStats.has(campaignCategory.advertising_category_id)) {
-          categoryStats.get(campaignCategory.advertising_category_id).impressions++;
-          categoryStats.get(campaignCategory.advertising_category_id).spend += (impression.bid || 0);
+          categoryStats.get(campaignCategory.advertising_category_id)!.impressions++;
+          categoryStats.get(campaignCategory.advertising_category_id)!.spend += (impression.bid || 0);
         }
       });
     }
@@ -471,10 +473,9 @@ export async function getAdvertiserStatsOverTime(
     // Count clicks by category
     if (clicks && advertisingCategories) {
       clicks.forEach((click: any) => {
-        const campaignCategory = campaignCategories.find((cc: any) => cc.id === click.campaign_category_id);
+        const campaignCategory = campaignCategories.find((cc: any) => cc.id === click.campaign_category_id) as any;
         if (campaignCategory && categoryStats.has(campaignCategory.advertising_category_id)) {
-          categoryStats.get(campaignCategory.advertising_category_id).clicks++;
-          categoryStats.get(campaignCategory.advertising_category_id).spend += (click.bid || 0);
+          categoryStats.get(campaignCategory.advertising_category_id)!.clicks++;
         }
       });
     }

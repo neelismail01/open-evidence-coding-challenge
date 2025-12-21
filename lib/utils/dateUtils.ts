@@ -1,11 +1,6 @@
 /**
  * Date utility functions
  * Centralizes date filtering and formatting logic
- *
- * This eliminates 3 duplicate implementations:
- * - app/advertiser/page.tsx (lines 47-72)
- * - app/advertiser/view/[campaignId]/page.tsx (lines 79-104)
- * - app/components/StatsLineChart.tsx (lines 66-91)
  */
 
 import type { TimeFilterOption, DateRange } from '@/lib/types';
@@ -21,10 +16,6 @@ import {
  * Converts a time filter string to start and end ISO date strings
  * @param filter - The time filter option
  * @returns Tuple of [startDate, endDate]. Both null means "All Time"
- *
- * @example
- * const [start, end] = getStartAndEndDatesFromFilter('Last 7 Days');
- * // Returns dates for the last 7 days
  */
 export function getStartAndEndDatesFromFilter(
   filter: TimeFilterOption | string

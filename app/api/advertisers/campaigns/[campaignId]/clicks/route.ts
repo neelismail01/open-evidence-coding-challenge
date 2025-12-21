@@ -1,4 +1,4 @@
-import { getCampaignClickCount } from '@/utils/supabase_manager';
+import { getCampaignClickCount } from '@/server/supabase_manager';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(req: NextRequest, { params }: { params: { campaignId: string } }) {

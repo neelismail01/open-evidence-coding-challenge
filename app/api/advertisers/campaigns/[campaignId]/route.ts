@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { SUPABASE_TABLE_NAME_CAMPAIGNS } from '../../../../../utils/constants';
-import { getRowsFromTable, updateRowInTable } from '../../../../../utils/supabase_manager';
+import { SUPABASE_TABLE_NAME_CAMPAIGNS } from '@/lib/constants';
+import { getRowsFromTable, updateRowInTable } from '../../../../../server/supabase_manager';
 
 export async function GET(request: NextRequest, { params }: { params: { campaignId: string } }) {
     try {

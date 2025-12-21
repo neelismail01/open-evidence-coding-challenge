@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Button, Container, TextField, FormControlLabel, Switch, Chip, IconButton, Snackbar, Alert, FormControl, MenuItem, Select, SelectChangeEvent, InputAdornment } from '@mui/material';
+import { Box, Typography, Button, Container, TextField, FormControlLabel, Switch, Chip, IconButton, Snackbar, Alert, InputAdornment } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import CloseIcon from '@mui/icons-material/Close';
@@ -943,8 +943,6 @@ export default function EditCampaignPage({ params }: { params: { campaignId: str
             closeRoute="/advertiser"
             animationDuration={100}
         >
-            <Container maxWidth="lg" style={{ marginTop: '20px' }}>
-                <EditCampaignHeader onClose={handleClose} />
                 <AdPreview
                     name={name}
                     description={description}
@@ -990,7 +988,6 @@ export default function EditCampaignPage({ params }: { params: { campaignId: str
                         {snackbarMessage}
                     </Alert>
                 </Snackbar>
-            </Container>
         </FullScreenSlideOverlay>
     );
 }

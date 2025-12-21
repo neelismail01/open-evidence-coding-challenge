@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { insertRowsToTable } from "../../../../utils/supabase_manager";
+import { insertRowsToTable } from '../../../../server/supabase_manager';
 
 export async function POST(req: NextRequest) {
     try {
@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
 
         if (insertError) {
             console.error("Error inserting into impressions table:", insertError);
-            return NextResponse.json({ error: insertError.message || "Failed to insert impression data" }, { status: 500 });
+            return NextResponse.json({ error: "Failed to insert impression data" }, { status: 500 });
         }
 
         return NextResponse.json({ success: true });
