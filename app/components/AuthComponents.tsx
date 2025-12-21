@@ -38,8 +38,8 @@ export const StyledButton = styled(Button)({
 export const StyledTextField = styled(TextField)({
   marginBottom: '20px',
   fontSize: '16px',
-  color: 'white',
   '& .MuiOutlinedInput-root': {
+    color: 'white',
     '& fieldset': {
         borderColor: '#5c5b5b',
     },
@@ -56,7 +56,7 @@ export const StyledTextField = styled(TextField)({
     '&.Mui-focused': {
         color: '#d45b15'
     }
-},
+  }
 });
 
 export const StyledFormControl = styled(FormControl)({
