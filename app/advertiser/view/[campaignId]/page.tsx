@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, Tooltip } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import WarningIcon from '@mui/icons-material/Warning';
 import StatsLineChart from '../../../components/StatsLineChart';
 import GenericTable from '../../../components/GenericTable';
 import { getStartAndEndDatesFromFilter } from '@/lib/utils/dateUtils';
@@ -24,6 +26,7 @@ interface Category {
     advertising_category_id: number;
     active: boolean;
     bid: number;
+    max_bid?: number;
     advertising_categories: {
         category_string: string;
     };
@@ -109,7 +112,14 @@ export default function ViewCampaignPage({ params }: { params: { campaignId: str
                 };
             });
 
-            setCategories(categoriesWithStats);
+            // Sort categories alphabetically by category string
+            const sortedCategories = categoriesWithStats.sort((a: Category, b: Category) => {
+                const categoryA = a.advertising_categories?.category_string || '';
+                const categoryB = b.advertising_categories?.category_string || '';
+                return categoryA.localeCompare(categoryB);
+            });
+
+            setCategories(sortedCategories);
         } catch (error) {
             console.error('Error fetching categories:', error);
         } finally {
@@ -217,7 +227,58 @@ export default function ViewCampaignPage({ params }: { params: { campaignId: str
                             label: 'Bid Amount',
                             align: 'center',
                             tooltip: 'Amount willing to pay per impression/click',
-                            render: (row: Category) => `$${row.bid?.toFixed(2) || '0.00'}`
+                            render: (row: Category) => {
+                                const maxBid = row.max_bid || 0;
+                                const isHighestBid = row.bid >= maxBid && maxBid > 0;
+                                const isBelowMaxBid = row.bid < maxBid;
+
+                                return (
+                                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                                        <Typography sx={{ color: 'white', fontSize: '14px' }}>
+                                            {`$${row.bid?.toFixed(2) || '0.00'}`}
+                                        </Typography>
+                                        {isHighestBid && (
+                                            <Tooltip title="This campaign has the highest bid for this category" arrow>
+                                                <CheckCircleIcon
+                                                    sx={{
+                                                        fontSize: '18px',
+                                                        color: '#4caf50',
+                                                        cursor: 'pointer'
+                                                    }}
+                                                />
+                                            </Tooltip>
+                                        )}
+                                        {isBelowMaxBid && (
+                                            <Tooltip title={`This campaign is below the highest bid of $${maxBid.toFixed(2)} for this category`} arrow>
+                                                <WarningIcon
+                                                    sx={{
+                                                        fontSize: '18px',
+                                                        color: '#ff9800',
+                                                        cursor: 'pointer'
+                                                    }}
+                                                />
+                                            </Tooltip>
+                                        )}
+                                    </Box>
+                                );
+                            }
+                        },
+                        {
+                            id: 'winRate',
+                            label: 'Win %',
+                            align: 'center',
+                            tooltip: 'Percentage of category matches where this campaign won the auction',
+                            render: (row: Category) => {
+                                const winRate = (row.matches && row.matches > 0)
+                                    ? ((row.impressions || 0) / row.matches * 100)
+                                    : 0;
+                                return `${winRate.toFixed(2)}%`;
+                            },
+                            sortValue: (row: Category) => {
+                                return (row.matches && row.matches > 0)
+                                    ? ((row.impressions || 0) / row.matches * 100)
+                                    : 0;
+                            }
                         },
                         {
                             id: 'impressions',
@@ -251,23 +312,6 @@ export default function ViewCampaignPage({ params }: { params: { campaignId: str
                             }
                         },
                         {
-                            id: 'winRate',
-                            label: 'Win %',
-                            align: 'center',
-                            tooltip: 'Percentage of category matches where this campaign won the auction',
-                            render: (row: Category) => {
-                                const winRate = (row.matches && row.matches > 0)
-                                    ? ((row.impressions || 0) / row.matches * 100)
-                                    : 0;
-                                return `${winRate.toFixed(2)}%`;
-                            },
-                            sortValue: (row: Category) => {
-                                return (row.matches && row.matches > 0)
-                                    ? ((row.impressions || 0) / row.matches * 100)
-                                    : 0;
-                            }
-                        },
-                        {
                             id: 'cpc',
                             label: 'Cost per Click',
                             align: 'center',
@@ -296,11 +340,10 @@ export default function ViewCampaignPage({ params }: { params: { campaignId: str
                                     sx={{
                                         display: 'inline-block',
                                         padding: '4px 12px',
-                                        borderRadius: '4px',
-                                        backgroundColor: row.active ? '#1b5e20' : '#c62828',
-                                        color: 'white',
+                                        borderRadius: '5px',
+                                        backgroundColor: row.active ? '#67e077' : '#d6857a',
+                                        color: row.active ? '#022907' : '#6b1206',
                                         fontSize: '12px',
-                                        fontWeight: 'bold'
                                     }}
                                 >
                                     {row.active ? 'Active' : 'Inactive'}

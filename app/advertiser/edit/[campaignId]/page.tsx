@@ -1,13 +1,15 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Button, Container, TextField, FormControlLabel, Switch, Chip, IconButton, Snackbar, Alert, InputAdornment } from '@mui/material';
+import { Box, Typography, Button, Container, TextField, FormControlLabel, Switch, Chip, IconButton, Snackbar, Alert, InputAdornment, Tooltip } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import WarningIcon from '@mui/icons-material/Warning';
 import GenericTable from '../../../components/GenericTable';
 import AdvertisementCard from '../../../components/AdvertisementCard';
 import { useAdvertiser } from '../../../contexts/AdvertiserContext';
@@ -27,6 +29,7 @@ interface CategoryBid {
     advertising_category_id: number;
     bid: number;
     active: boolean;
+    max_bid?: number;
     advertising_categories?: {
         category_string: string;
     };
@@ -519,8 +522,12 @@ function CategoryBidManager({
                     );
                 }
 
+                const maxBid = row.max_bid || 0;
+                const isHighestBid = row.bid >= maxBid && maxBid > 0;
+                const isBelowMaxBid = row.bid < maxBid;
+
                 return (
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
                         <Chip
                             label={
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -547,6 +554,28 @@ function CategoryBidManager({
                                 }
                             }}
                         />
+                        {isHighestBid && (
+                            <Tooltip title="This campaign has the highest bid for this category" arrow>
+                                <CheckCircleIcon
+                                    sx={{
+                                        fontSize: '18px',
+                                        color: '#4caf50',
+                                        cursor: 'pointer'
+                                    }}
+                                />
+                            </Tooltip>
+                        )}
+                        {isBelowMaxBid && (
+                            <Tooltip title={`This campaign is below the highest bid of $${maxBid.toFixed(2)} for this category`} arrow>
+                                <WarningIcon
+                                    sx={{
+                                        fontSize: '18px',
+                                        color: '#ff9800',
+                                        cursor: 'pointer'
+                                    }}
+                                />
+                            </Tooltip>
+                        )}
                     </Box>
                 );
             },
@@ -795,7 +824,12 @@ export default function EditCampaignPage({ params }: { params: { campaignId: str
                 // Fetch associated categories
                 const categoriesResponse = await axios.get(`/api/advertisers/campaigns/${params.campaignId}/categories`);
                 console.log("categoriesResponse=",categoriesResponse)
-                setCategories(categoriesResponse.data.categories);
+                const sortedCategories = categoriesResponse.data.categories.sort((a: CategoryBid, b: CategoryBid) => {
+                    const categoryA = a.advertising_categories?.category_string || '';
+                    const categoryB = b.advertising_categories?.category_string || '';
+                    return categoryA.localeCompare(categoryB);
+                });
+                setCategories(sortedCategories);
 
             } catch (error) {
                 console.error('Error fetching campaign or categories:', error);
@@ -861,7 +895,12 @@ export default function EditCampaignPage({ params }: { params: { campaignId: str
 
                 // Refresh the categories list to get the proper structure with joined data
                 const categoriesResponse = await axios.get(`/api/advertisers/campaigns/${params.campaignId}/categories`);
-                setCategories(categoriesResponse.data.categories);
+                const sortedCategories = categoriesResponse.data.categories.sort((a: CategoryBid, b: CategoryBid) => {
+                    const categoryA = a.advertising_categories?.category_string || '';
+                    const categoryB = b.advertising_categories?.category_string || '';
+                    return categoryA.localeCompare(categoryB);
+                });
+                setCategories(sortedCategories);
 
                 setcategoryInput('');
                 setBidInput(0);
@@ -889,7 +928,12 @@ export default function EditCampaignPage({ params }: { params: { campaignId: str
 
             // Refresh the categories list
             const categoriesResponse = await axios.get(`/api/advertisers/campaigns/${params.campaignId}/categories`);
-            setCategories(categoriesResponse.data.categories);
+            const sortedCategories = categoriesResponse.data.categories.sort((a: CategoryBid, b: CategoryBid) => {
+                const categoryA = a.advertising_categories?.category_string || '';
+                const categoryB = b.advertising_categories?.category_string || '';
+                return categoryA.localeCompare(categoryB);
+            });
+            setCategories(sortedCategories);
 
             showSnackbar(`Category "${categoryToDelete}" removed successfully!`, 'success');
         } catch (error: any) {
@@ -909,8 +953,12 @@ export default function EditCampaignPage({ params }: { params: { campaignId: str
 
             // Refresh the categories list to get updated bid amounts
             const categoriesResponse = await axios.get(`/api/advertisers/campaigns/${params.campaignId}/categories`);
-            setCategories(categoriesResponse.data.categories);
-
+            const sortedCategories = categoriesResponse.data.categories.sort((a: CategoryBid, b: CategoryBid) => {
+                const categoryA = a.advertising_categories?.category_string || '';
+                const categoryB = b.advertising_categories?.category_string || '';
+                return categoryA.localeCompare(categoryB);
+            });
+            setCategories(sortedCategories);
             showSnackbar(`Bid for "${category}" updated to $${newBid.toFixed(2)}!`, 'success');
         } catch (error: any) {
             console.error('Error updating bid:', error);
