@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getRowsFromTable } from '../../../../../../utils/supabase_manager';
+import { getRowsFromTable } from '../../../../../../server/supabase_manager';
 
 export async function GET(req: NextRequest, { params }: { params: { campaignId: string } }) {
   try {
@@ -9,7 +9,7 @@ export async function GET(req: NextRequest, { params }: { params: { campaignId: 
 
     // Get campaign categories for this campaign
     const { data: campaignCategories, error: categoriesError } = await getRowsFromTable('campaign_categories', {
-      filters: { campaign_id: parseInt(campaignId), active: true }
+      filters: { campaign_id: parseInt(campaignId) }
     });
 
     if (categoriesError || !campaignCategories) {
@@ -21,7 +21,12 @@ export async function GET(req: NextRequest, { params }: { params: { campaignId: 
       return NextResponse.json({
         stats: {
           timeSeriesData: [],
-          categoryStats: []
+          categoryStats: [],
+          summary: {
+            totalImpressions: 0,
+            totalClicks: 0,
+            totalSpend: 0
+          }
         }
       }, { status: 200 });
     }
@@ -76,8 +81,6 @@ export async function GET(req: NextRequest, { params }: { params: { campaignId: 
           statsMap.set(date, { date, impressions: 0, clicks: 0, spend: 0 });
         }
         statsMap.get(date).clicks++;
-        // Add click cost (bid amount)
-        statsMap.get(date).spend += (click.bid || 0);
       });
     }
 
@@ -117,10 +120,10 @@ export async function GET(req: NextRequest, { params }: { params: { campaignId: 
     // Count impressions by category
     if (impressions && advertisingCategories) {
       impressions.forEach((impression: any) => {
-        const campaignCategory = campaignCategories.find((cc: any) => cc.id === impression.campaign_category_id);
+        const campaignCategory = campaignCategories.find((cc: any) => cc.id === impression.campaign_category_id) as any;
         if (campaignCategory && categoryStats.has(campaignCategory.advertising_category_id)) {
-          categoryStats.get(campaignCategory.advertising_category_id).impressions++;
-          categoryStats.get(campaignCategory.advertising_category_id).spend += (impression.bid || 0);
+          categoryStats.get(campaignCategory.advertising_category_id)!.impressions++;
+          categoryStats.get(campaignCategory.advertising_category_id)!.spend += (impression.bid || 0);
         }
       });
     }
@@ -128,20 +131,38 @@ export async function GET(req: NextRequest, { params }: { params: { campaignId: 
     // Count clicks by category
     if (clicks && advertisingCategories) {
       clicks.forEach((click: any) => {
-        const campaignCategory = campaignCategories.find((cc: any) => cc.id === click.campaign_category_id);
+        const campaignCategory = campaignCategories.find((cc: any) => cc.id === click.campaign_category_id) as any;
         if (campaignCategory && categoryStats.has(campaignCategory.advertising_category_id)) {
-          categoryStats.get(campaignCategory.advertising_category_id).clicks++;
-          categoryStats.get(campaignCategory.advertising_category_id).spend += (click.bid || 0);
+          categoryStats.get(campaignCategory.advertising_category_id)!.clicks++;
         }
       });
     }
 
     const categoryStatsArray = Array.from(categoryStats.values());
 
+    // Calculate summary statistics
+    let totalImpressions = 0;
+    let totalClicks = 0;
+    let totalSpend = 0;
+
+    if (impressions) {
+      totalImpressions = impressions.length;
+      totalSpend = impressions.reduce((sum: number, impression: any) => sum + (impression.bid || 0), 0);
+    }
+
+    if (clicks) {
+      totalClicks = clicks.length;
+    }
+
     return NextResponse.json({
       stats: {
         timeSeriesData,
-        categoryStats: categoryStatsArray
+        categoryStats: categoryStatsArray,
+        summary: {
+          totalImpressions,
+          totalClicks,
+          totalSpend
+        }
       }
     }, { status: 200 });
 

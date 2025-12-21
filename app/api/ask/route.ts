@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getLLMResponse, getLLMResponseStream } from '@/utils/openai_manager';
+import { getLLMResponse, getLLMResponseStream } from '@/server/openai_manager';
 
 export async function POST(request: Request) {
   const { question, history, stream } = await request.json();

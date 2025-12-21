@@ -1,6 +1,6 @@
 
 import { NextResponse } from 'next/server';
-import { getTotalCampaignCost } from '../../../../../../../utils/supabase_manager';
+import { getTotalCampaignCost } from '../../../../../../../server/supabase_manager';
 
 export async function GET(request: Request, { params }: { params: { categoryId: string } }) {
     try {

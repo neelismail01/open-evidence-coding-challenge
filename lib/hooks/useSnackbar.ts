@@ -37,31 +37,6 @@ export interface UseSnackbarReturn {
  *
  * @returns Snackbar state and control functions
  *
- * @example
- * ```tsx
- * const { snackbar, showSuccess, showError, hideSnackbar } = useSnackbar();
- *
- * // Show notifications
- * const handleSave = async () => {
- *   try {
- *     await saveData();
- *     showSuccess('Data saved successfully!');
- *   } catch (error) {
- *     showError('Failed to save data');
- *   }
- * };
- *
- * // Use with MUI Snackbar
- * <Snackbar
- *   open={snackbar.open}
- *   autoHideDuration={6000}
- *   onClose={hideSnackbar}
- * >
- *   <Alert severity={snackbar.severity} onClose={hideSnackbar}>
- *     {snackbar.message}
- *   </Alert>
- * </Snackbar>
- * ```
  */
 export function useSnackbar(): UseSnackbarReturn {
   const [snackbar, setSnackbar] = useState<SnackbarState>({

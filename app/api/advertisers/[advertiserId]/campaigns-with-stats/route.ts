@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { SUPABASE_TABLE_NAME_CAMPAIGNS } from '../../../../../utils/constants';
-import { getRowsFromTable } from '../../../../../utils/supabase_manager';
+import { SUPABASE_TABLE_NAME_CAMPAIGNS } from '@/lib/constants';
+import { getRowsFromTable } from '../../../../../server/supabase_manager';
 
 interface CampaignWithStats {
   id: number;
@@ -147,7 +147,6 @@ export async function GET(
         if (campaignId && campaignStatsMap.has(campaignId)) {
           const stats = campaignStatsMap.get(campaignId)!;
           stats.clicks_count++;
-          stats.total_cost += (click.bid || 0);
         }
       });
     }

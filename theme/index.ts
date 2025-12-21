@@ -5,7 +5,7 @@
 
 import { createTheme, ThemeOptions } from '@mui/material/styles';
 import { colors } from './colors';
-import { spacing, borderRadius, heights, widths, zIndex } from './spacing';
+import { borderRadius } from './spacing';
 import { typography } from './typography';
 
 // Create the MUI theme with our custom configuration

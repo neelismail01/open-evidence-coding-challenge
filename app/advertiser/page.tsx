@@ -1,21 +1,10 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
-import {
-    Box, Container, FormControl, MenuItem, Select, SelectChangeEvent, Typography
-} from '@mui/material';
+import { useRouter, useSearchParams } from 'next/navigation';
+import React, { useEffect, useRef } from 'react';
+import { Box, Container } from '@mui/material';
 
-import Header from '../components/Header';
-import {
-    ADVERTISERS,
-    FILTER_DURATION_1_YEAR,
-    FILTER_DURATION_24_HRS,
-    FILTER_DURATION_7_DAYS,
-    FILTER_DURATION_30_DAYS,
-    FILTER_DURATION_ALL_TIME
-}  from '../../utils/constants';
+import { ADVERTISERS } from '@/lib/constants';
 import GenericTable from '../components/GenericTable';
 import StatsLineChart from '../components/StatsLineChart';
 import { useAdvertiser } from '../contexts/AdvertiserContext';
@@ -42,13 +31,9 @@ interface Campaign {
     cost_per_click: number;
 }
 
-interface Advertiser {
-    id: number;
-    name: string;
-}
-
 export default function AdvertiserHome() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const {
         activeAdvertiser,
         setActiveAdvertiser,
@@ -63,14 +48,21 @@ export default function AdvertiserHome() {
         updateCampaign
     } = useAdvertiser();
     const tableContainerRef = useRef<HTMLDivElement>(null);
-    const handleNewConversation = () => {};
 
-    // Initialize active advertiser on mount
+    // Initialize active advertiser from URL parameter
     useEffect(() => {
-        if (!activeAdvertiser && ADVERTISERS.length > 0) {
+        const companyIdParam = searchParams.get('companyId');
+        if (companyIdParam) {
+            const companyId = parseInt(companyIdParam);
+            const advertiser = ADVERTISERS.find(adv => adv.id === companyId);
+            if (advertiser) {
+                setActiveAdvertiser(advertiser);
+            }
+        } else if (!activeAdvertiser && ADVERTISERS.length > 0) {
+            // Fallback to first advertiser if no URL parameter
             setActiveAdvertiser(ADVERTISERS[0]);
         }
-    }, [activeAdvertiser, setActiveAdvertiser]);
+    }, [searchParams, setActiveAdvertiser]);
 
     // Fetch campaigns when advertiser or filter changes
     useEffect(() => {
@@ -166,12 +158,6 @@ export default function AdvertiserHome() {
                 height: '100vh',
             }}
         >
-            <Header
-                handleNewConversation={handleNewConversation}
-                showNewChatButton={false}
-                activeAdvertiser={activeAdvertiser}
-                setActiveAdvertiser={setActiveAdvertiser}
-            />
             <Container maxWidth="lg" style={{ marginTop: '20px' }}>
                 <TimeFilter
                     value={selectedFilter as TimeFilterOption}

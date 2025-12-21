@@ -15,13 +15,15 @@ const FormContainer = styled(Box)({
 interface QuestionFormProps {
   question: string;
   setQuestion: (question: string) => void;
+  chatStarted: boolean;
   handleSubmit: (event: React.FormEvent) => void;
   loading: boolean;
 }
 
 export default function QuestionForm({ 
   question, 
-  setQuestion, 
+  setQuestion,
+  chatStarted, 
   handleSubmit, 
   loading 
 } : QuestionFormProps) {
@@ -29,7 +31,7 @@ export default function QuestionForm({
     <form onSubmit={handleSubmit}>
       <FormContainer>
         <TextField
-          placeholder="Ask a question"
+          placeholder={chatStarted ? "Ask a follow-up question" : "Ask a question"}
           variant="standard"
           fullWidth
           value={question}

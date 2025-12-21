@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getEmbedding } from '../../../utils/openai_manager';
-import { findNearestRows, incrementMatchesForCategory } from '../../../utils/supabase_manager';
+import { getEmbedding } from '../../../server/openai_manager';
+import { findNearestRows, incrementMatchesForCategory } from '../../../server/supabase_manager';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.SUPABASE_URL || '';

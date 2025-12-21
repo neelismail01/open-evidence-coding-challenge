@@ -8,7 +8,7 @@ import { colors } from './colors';
 import { spacing, borderRadius, heights } from './spacing';
 
 export const componentStyles = {
-  // Loading skeleton box - replaces 13+ occurrences of loadingBoxStyle
+  // Loading skeleton box
   loadingBox: {
     width: '100%',
     height: heights.skeleton,

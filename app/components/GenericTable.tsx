@@ -14,8 +14,14 @@ import {
     IconButton,
     Tooltip
 } from '@mui/material';
-import { MoreVert, ArrowDropDown as ArrowDropDownIcon, ArrowDropUp as ArrowDropUpIcon, InfoOutlined } from '@mui/icons-material';
-import { ROW_HEIGHT } from '../../utils/constants';
+import { 
+    MoreVert,
+    ArrowDropDown as ArrowDropDownIcon,
+    ArrowDropUp as ArrowDropUpIcon,
+    InfoOutlined 
+} from '@mui/icons-material';
+
+const ROW_HEIGHT = 53;
 
 interface ColumnDefinition<T> {
     id: string;
@@ -60,7 +66,7 @@ const tableRowHeaderStyle = {
     margin: '0px'
 };
 
-const GenericTable = forwardRef(
+const GenericTableComponent = forwardRef(
     <T,>(
         { data, columns, onRowAction, campaignSpecificActions = false, isLoading = false, menuActions }: GenericTableProps<T>,
         ref: React.Ref<HTMLDivElement>
@@ -287,8 +293,10 @@ const GenericTable = forwardRef(
             )}
         </TableContainer>
     );
-}) as <T>(props: GenericTableProps<T> & { ref?: React.Ref<HTMLDivElement> }) => React.ReactElement;
+});
 
-GenericTable.displayName = 'GenericTable';
+GenericTableComponent.displayName = 'GenericTable';
+
+const GenericTable = GenericTableComponent as <T>(props: GenericTableProps<T> & { ref?: React.Ref<HTMLDivElement> }) => React.ReactElement;
 
 export default GenericTable;

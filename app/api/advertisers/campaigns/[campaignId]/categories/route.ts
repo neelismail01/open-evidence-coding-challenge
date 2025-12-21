@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getRowsFromTable, insertRowsToTable, updateRowsInTable } from '../../../../../../utils/supabase_manager';
-import { getEmbedding } from '../../../../../../utils/openai_manager';
-import { SUPABASE_TABLE_NAME_ADVERTISING_CATEGORIES, SUPABASE_TABLE_NAME_CAMPAIGN_CATEGORIES } from '../../../../../../utils/constants'; // Corrected import path
+import { getRowsFromTable, insertRowsToTable, updateRowsInTable } from '../../../../../../server/supabase_manager';
+import { getEmbedding } from '../../../../../../server/openai_manager';
+import { SUPABASE_TABLE_NAME_ADVERTISING_CATEGORIES, SUPABASE_TABLE_NAME_CAMPAIGN_CATEGORIES } from '@/lib/constants';
 
 interface AdvertisingCategory {
     id: number;
@@ -33,7 +33,7 @@ async function getOrCreateAdvertisingCategory(
   }
 
   if (existingAdvertisingCategoriesData && existingAdvertisingCategoriesData.length > 0) {
-    return { advertisingCategoryId: existingAdvertisingCategoriesData[0].id };
+    return { advertisingCategoryId: String((existingAdvertisingCategoriesData[0] as AdvertisingCategory).id) };
   }
 
   if (!active) {
@@ -56,7 +56,7 @@ async function getOrCreateAdvertisingCategory(
   }
 
   const newAdvertisingCategory = newAdvertisingCategoryData as AdvertisingCategory[]; // Still need cast as insert returns any[]
-  return { advertisingCategoryId: newAdvertisingCategory[0].id };
+  return { advertisingCategoryId: String(newAdvertisingCategory[0].id) };
 }
 
 async function insertCampaignCategoryAssociation(
