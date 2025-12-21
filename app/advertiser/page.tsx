@@ -1,12 +1,13 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, Suspense } from 'react';
 import { Box, Container } from '@mui/material';
 
 import { ADVERTISERS } from '@/lib/constants';
 import GenericTable from '../components/GenericTable';
 import StatsLineChart from '../components/StatsLineChart';
+import ChatSidebar from '../components/ChatSidebar';
 import { useAdvertiser } from '../contexts/AdvertiserContext';
 import { getStartAndEndDatesFromFilter } from '@/lib/utils/dateUtils';
 import { TimeFilter, MetricsGrid } from '@/components';
@@ -31,7 +32,7 @@ interface Campaign {
     cost_per_click: number;
 }
 
-export default function AdvertiserHome() {
+function AdvertiserHomeContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const {
@@ -49,6 +50,14 @@ export default function AdvertiserHome() {
     } = useAdvertiser();
     const tableContainerRef = useRef<HTMLDivElement>(null);
 
+    const handleNewCampaign = () => {
+        router.push('/advertiser/create');
+    };
+
+    const handleLogout = () => {
+        router.push('/physician');
+    };
+
     // Initialize active advertiser from URL parameter
     useEffect(() => {
         const companyIdParam = searchParams.get('companyId');
@@ -62,7 +71,7 @@ export default function AdvertiserHome() {
             // Fallback to first advertiser if no URL parameter
             setActiveAdvertiser(ADVERTISERS[0]);
         }
-    }, [searchParams, setActiveAdvertiser]);
+    }, [searchParams, setActiveAdvertiser, activeAdvertiser]);
 
     // Fetch campaigns when advertiser or filter changes
     useEffect(() => {
@@ -115,7 +124,8 @@ export default function AdvertiserHome() {
             tooltip: 'Percentage of impressions that resulted in clicks',
             render: (campaign: Campaign) => campaignsLoading ? <Box sx={ loadingBoxStyle } /> : (
                 campaign.impressions_count ? String((campaign.clicks_count / campaign.impressions_count * 100).toFixed(2)) + "%" : String(campaign.impressions_count.toFixed(2)) + "%"
-            )
+            ),
+            sortValue: (campaign: Campaign) => campaign.impressions_count ? (campaign.clicks_count / campaign.impressions_count * 100) : 0
         },
         {
             id: 'cost_per_click',
@@ -154,58 +164,80 @@ export default function AdvertiserHome() {
         <Box
             sx={{
                 display: 'flex',
-                flexDirection: 'column',
+                flexDirection: 'row',
                 height: '100vh',
             }}
         >
-            <Container maxWidth="lg" style={{ marginTop: '20px' }}>
-                <TimeFilter
-                    value={selectedFilter as TimeFilterOption}
-                    onChange={(filter) => setSelectedFilter(filter)}
-                    title="Advertising Performance"
-                />
-
-                {/* Summary Cards */}
-                <MetricsGrid
-                    metrics={[
-                        {
-                            title: 'Total Impressions',
-                            value: totalImpressions,
-                            formatter: (val) => val.toLocaleString(),
-                            loading: campaignsLoading,
-                        },
-                        {
-                            title: 'Total Spend',
-                            value: totalSpend,
-                            formatter: (val) => `$${val.toFixed(2)}`,
-                            loading: campaignsLoading,
-                        },
-                        {
-                            title: 'Aggregate CTR',
-                            value: aggregateCTR,
-                            formatter: (val) => `${val.toFixed(2)}%`,
-                            loading: campaignsLoading,
-                        },
-                    ]}
-                />
-
-                <StatsLineChart
-                    selectedFilter={selectedFilter}
-                    isLoading={campaignsLoading}
-                    advertiserId={activeAdvertiser?.id || 0}
-                />
-                {campaigns && (
-                    <GenericTable
-                        data={campaignsLoading ? Array.from({ length: 1 }).map((_, index) => ({ id: index })) : campaigns as any[]}
-                        columns={campaignColumns}
-                        onRowAction={handleCampaignAction}
-                        campaignSpecificActions={true}
-                        ref={tableContainerRef}
-                        isLoading={campaignsLoading}
-                        menuActions={campaignMenuActions}
+            <ChatSidebar
+                handleNewConversation={handleNewCampaign}
+                handleLogout={handleLogout}
+                tooltipText="New Campaign"
+            />
+            <Box
+                sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    flex: 1,
+                    overflowY: 'auto',
+                }}
+            >
+                <Container maxWidth="lg" style={{ marginTop: '20px' }}>
+                    <TimeFilter
+                        value={selectedFilter as TimeFilterOption}
+                        onChange={(filter) => setSelectedFilter(filter)}
+                        title={`${activeAdvertiser?.name} Advertising Performance`}
                     />
-                )}
-            </Container>
+
+                    {/* Summary Cards */}
+                    <MetricsGrid
+                        metrics={[
+                            {
+                                title: 'Total Impressions',
+                                value: totalImpressions,
+                                formatter: (val) => val.toLocaleString(),
+                                loading: campaignsLoading,
+                            },
+                            {
+                                title: 'Total Spend',
+                                value: totalSpend,
+                                formatter: (val) => `$${val.toFixed(2)}`,
+                                loading: campaignsLoading,
+                            },
+                            {
+                                title: 'Aggregate CTR',
+                                value: aggregateCTR,
+                                formatter: (val) => `${val.toFixed(2)}%`,
+                                loading: campaignsLoading,
+                            },
+                        ]}
+                    />
+
+                    <StatsLineChart
+                        selectedFilter={selectedFilter}
+                        isLoading={campaignsLoading}
+                        advertiserId={activeAdvertiser?.id || 0}
+                    />
+                    {campaigns && (
+                        <GenericTable
+                            data={campaignsLoading ? Array.from({ length: 1 }).map((_, index) => ({ id: index })) : campaigns as any[]}
+                            columns={campaignColumns}
+                            onRowAction={handleCampaignAction}
+                            campaignSpecificActions={true}
+                            ref={tableContainerRef}
+                            isLoading={campaignsLoading}
+                            menuActions={campaignMenuActions}
+                        />
+                    )}
+                </Container>
+            </Box>
         </Box>
     )
+}
+
+export default function AdvertiserHome() {
+    return (
+        <Suspense fallback={<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>Loading...</Box>}>
+            <AdvertiserHomeContent />
+        </Suspense>
+    );
 }

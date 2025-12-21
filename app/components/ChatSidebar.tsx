@@ -13,6 +13,7 @@ import { styled } from '@mui/system';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import LoginIcon from '@mui/icons-material/Login';
+import LogoutIcon from '@mui/icons-material/Logout';
 import AddIcon from '@mui/icons-material/Add';
 
 const StyledBox = styled(Box)({
@@ -48,9 +49,11 @@ const StyledMenuIconButton = styled(IconButton)({
 
 interface HeaderProps {
   handleNewConversation: () => void;
+  handleLogout?: () => void;
+  tooltipText?: string;
 }
 
-export default function ChatSidebar({ handleNewConversation }: HeaderProps) {
+export default function ChatSidebar({ handleNewConversation, handleLogout, tooltipText }: HeaderProps) {
   const router = useRouter();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
@@ -68,9 +71,16 @@ export default function ChatSidebar({ handleNewConversation }: HeaderProps) {
     router.push('/login');
   };
 
+  const handleLogoutClick = () => {
+    handleMenuClose();
+    if (handleLogout) {
+      handleLogout();
+    }
+  };
+
   return (
     <StyledBox>
-      <Tooltip title='New Chat' placement='right'>
+      <Tooltip title={tooltipText || 'New Chat'} placement='right'>
         <StyledNewChatIconButton>
           <AddIcon style={{ fontSize: '16px' }} onClick={handleNewConversation} />
         </StyledNewChatIconButton>
@@ -113,14 +123,25 @@ export default function ChatSidebar({ handleNewConversation }: HeaderProps) {
           }
         }}
       >
-        <MenuItem style={{ marginRight: '30px' }} onClick={handleAdvertiserLogin}>
-          <IconButton sx={{ padding: '2px', marginLeft: '-4px' }}>
-            <LoginIcon style={{ color: 'white', fontSize: '16px' }} />
-          </IconButton>
-          <Typography style={{ color: 'white', fontSize: '14px', marginLeft: '10px' }}>
-            Advertiser Login
-          </Typography>
-        </MenuItem>
+        {handleLogout ? (
+          <MenuItem style={{ marginRight: '30px' }} onClick={handleLogoutClick}>
+            <IconButton sx={{ padding: '2px', marginLeft: '-4px' }}>
+              <LogoutIcon style={{ color: 'white', fontSize: '16px' }} />
+            </IconButton>
+            <Typography style={{ color: 'white', fontSize: '14px', marginLeft: '10px' }}>
+              Logout
+            </Typography>
+          </MenuItem>
+        ) : (
+          <MenuItem style={{ marginRight: '30px' }} onClick={handleAdvertiserLogin}>
+            <IconButton sx={{ padding: '2px', marginLeft: '-4px' }}>
+              <LoginIcon style={{ color: 'white', fontSize: '16px' }} />
+            </IconButton>
+            <Typography style={{ color: 'white', fontSize: '14px', marginLeft: '10px' }}>
+              Advertiser Login
+            </Typography>
+          </MenuItem>
+        )}
       </Menu>
     </StyledBox>
   );

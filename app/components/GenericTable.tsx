@@ -30,6 +30,7 @@ interface ColumnDefinition<T> {
     render?: (row: T) => React.ReactNode;
     minWidth?: number;
     tooltip?: string;
+    sortValue?: (row: T) => any; // Function to extract the value for sorting
 }
 
 interface MenuAction {
@@ -110,8 +111,17 @@ const GenericTableComponent = forwardRef(
 
     const sortedData = [...data].sort((a, b) => {
         if (sortColumn) {
-            const aValue = (a as any)[sortColumn];
-            const bValue = (b as any)[sortColumn];
+            const column = columns.find(col => col.id === sortColumn);
+
+            // Use sortValue function if provided, otherwise fall back to direct property access
+            const aValue = column?.sortValue ? column.sortValue(a) : (a as any)[sortColumn];
+            const bValue = column?.sortValue ? column.sortValue(b) : (b as any)[sortColumn];
+
+            // Handle null/undefined values
+            if (aValue == null && bValue == null) return 0;
+            if (aValue == null) return 1;
+            if (bValue == null) return -1;
+
             if (aValue < bValue) {
                 return sortDirection === 'asc' ? -1 : 1;
             }

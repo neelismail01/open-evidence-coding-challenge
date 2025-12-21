@@ -38,26 +38,26 @@ export default function SignupPage() {
   const [loadingCompanies, setLoadingCompanies] = useState(true);
 
   useEffect(() => {
-    fetchCompanies();
-  }, []);
-
-  const fetchCompanies = async () => {
-    try {
-      const response = await fetch('/api/companies');
-      const data = await response.json();
-
-      if (response.ok) {
-        setCompanies(data.companies || []);
-      } else {
+    const fetchCompanies = async () => {
+      try {
+        const response = await fetch('/api/companies');
+        const data = await response.json();
+  
+        if (response.ok) {
+          setCompanies(data.companies || []);
+        } else {
+          showError('Failed to load companies');
+        }
+      } catch (error) {
+        console.error('Error fetching companies:', error);
         showError('Failed to load companies');
+      } finally {
+        setLoadingCompanies(false);
       }
-    } catch (error) {
-      console.error('Error fetching companies:', error);
-      showError('Failed to load companies');
-    } finally {
-      setLoadingCompanies(false);
-    }
-  };
+    };
+
+    fetchCompanies();
+  }, [showError]);
 
   const handleCompanyChange = (event: SelectChangeEvent) => {
     setCompanyId(event.target.value);
