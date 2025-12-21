@@ -58,7 +58,6 @@ function AdvertiserHomeContent() {
         router.push('/physician');
     };
 
-    // Initialize active advertiser from URL parameter
     useEffect(() => {
         const companyIdParam = searchParams.get('companyId');
         if (companyIdParam) {
@@ -68,12 +67,10 @@ function AdvertiserHomeContent() {
                 setActiveAdvertiser(advertiser);
             }
         } else if (!activeAdvertiser && ADVERTISERS.length > 0) {
-            // Fallback to first advertiser if no URL parameter
             setActiveAdvertiser(ADVERTISERS[0]);
         }
     }, [searchParams, setActiveAdvertiser, activeAdvertiser]);
 
-    // Fetch campaigns when advertiser or filter changes
     useEffect(() => {
         if (activeAdvertiser) {
             const [startDate, endDate] = getStartAndEndDatesFromFilter(selectedFilter);

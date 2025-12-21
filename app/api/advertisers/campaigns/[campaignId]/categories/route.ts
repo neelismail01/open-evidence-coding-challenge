@@ -165,7 +165,7 @@ export async function GET(
     const dateRange = (startDate && endDate) ? { column: 'created_at', from: startDate, to: endDate } : undefined;
 
     const { data: campaignCategoriesData, error: campaignCategoriesError } = await getRowsFromTable<CampaignCategory & { advertising_categories: { category_string: string } }>(SUPABASE_TABLE_NAME_CAMPAIGN_CATEGORIES, {
-      filters: { campaign_id: campaignId, active: true },
+      filters: { campaign_id: campaignId },
       selectString: '*, advertising_categories(category_string)',
       dateRange: dateRange,
     });
@@ -181,7 +181,41 @@ export async function GET(
       return NextResponse.json({ categories: [] }, { status: 200 });
     }
 
-    return NextResponse.json({ categories: campaignCategories }, { status: 200 });
+    // Get unique advertising_category_ids from campaign categories
+    const advertisingCategoryIds = Array.from(new Set(campaignCategories.map(cc => cc.advertising_category_id)));
+
+    // Fetch all active campaign_categories for these advertising categories to find max bids
+    const { data: allCampaignCategoriesData, error: allCampaignCategoriesError } = await getRowsFromTable<CampaignCategory>(
+      SUPABASE_TABLE_NAME_CAMPAIGN_CATEGORIES,
+      {
+        inFilters: { advertising_category_id: advertisingCategoryIds },
+        filters: { active: true },
+      }
+    );
+
+    if (allCampaignCategoriesError) {
+      console.error('Error fetching all campaign categories for max bid:', allCampaignCategoriesError);
+      return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    }
+
+    // Calculate max bid for each advertising_category_id
+    const maxBidsByCategory = new Map<number, number>();
+    if (allCampaignCategoriesData) {
+      allCampaignCategoriesData.forEach(cc => {
+        const currentMax = maxBidsByCategory.get(cc.advertising_category_id) || 0;
+        if (cc.bid > currentMax) {
+          maxBidsByCategory.set(cc.advertising_category_id, cc.bid);
+        }
+      });
+    }
+
+    // Enrich campaign categories with max_bid information
+    const enrichedCategories = campaignCategories.map(cc => ({
+      ...cc,
+      max_bid: maxBidsByCategory.get(cc.advertising_category_id) || 0,
+    }));
+
+    return NextResponse.json({ categories: enrichedCategories }, { status: 200 });
   } catch (error) {
     console.error('Error in GET campaign categories endpoint:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

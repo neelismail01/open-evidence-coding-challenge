@@ -38,6 +38,7 @@ export const StyledButton = styled(Button)({
 export const StyledTextField = styled(TextField)({
   marginBottom: '20px',
   fontSize: '16px',
+  color: 'white',
   '& .MuiOutlinedInput-root': {
     '& fieldset': {
         borderColor: '#5c5b5b',
