@@ -4,6 +4,7 @@ import { Box, Paper, Typography } from '@mui/material';
 import { styled, keyframes } from '@mui/system';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { useEffect } from 'react';
 import AdvertisementCard, { FoldedAdvertisementCard } from './AdvertisementCard';
 
 interface Company {
@@ -43,7 +44,7 @@ const StyledUserPaper = styled(Paper)({
 });
 
 const StyledAssistantPaper = styled(Paper)({
-  padding: '1.25rem 1.5rem',
+  padding: '0.25rem 0.25rem',
   marginBottom: '1.5rem',
   borderRadius: '12px',
   backgroundColor: 'transparent',
@@ -108,15 +109,17 @@ interface ConversationHistoryProps {
   onAdClick?: (ad: Ad) => void;
   onAdImpression?: (ad: Ad) => void;
   currentAd?: Ad | null;
+  latestQuestionRef?: React.RefObject<HTMLDivElement>;
 }
 
 function ConversationHistoryItem({
   role,
-  content
-}: HistoryItem) {
+  content,
+  questionRef
+}: HistoryItem & { questionRef?: React.RefObject<HTMLDivElement> }) {
   if (role == 'user') {
     return (
-      <Box display="flex" justifyContent="flex-end" marginTop="10px">
+      <Box display="flex" justifyContent="flex-end" marginTop="10px" ref={questionRef}>
         <StyledUserPaper elevation={3} style={{ width: 'fit-content', maxWidth: '80%' }}>
           <ReactMarkdown>
             {content}
@@ -140,55 +143,101 @@ export default function ConversationHistory({
   streamingContent,
   onAdClick,
   onAdImpression,
-  currentAd
+  currentAd,
+  latestQuestionRef
 }: ConversationHistoryProps) {
-  // Find the index of the last user message to show the full ad
+
   const lastUserIndex = history.length > 0
     ? history.map((item, idx) => item.role === 'user' ? idx : -1).filter(idx => idx !== -1).pop()
     : -1;
 
+  // Scroll to the latest question when history changes
+  useEffect(() => {
+    if (latestQuestionRef?.current) {
+      latestQuestionRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  }, [history.length, latestQuestionRef]);
+
+  // Group messages into Q&A pairs
+  const conversationPairs: Array<{userMessage: HistoryItem, userIndex: number, assistantMessage?: HistoryItem}> = [];
+
+  history.forEach((item, index) => {
+    if (item.role === 'user') {
+      conversationPairs.push({
+        userMessage: item,
+        userIndex: index,
+        assistantMessage: undefined
+      });
+    } else if (item.role === 'assistant' && conversationPairs.length > 0) {
+      conversationPairs[conversationPairs.length - 1].assistantMessage = item;
+    }
+  });
+
   return (
-    <Box>
-      {history.map((item, index) => {
-        const isLastUser = index === lastUserIndex && item.role === 'user';
+    <Box sx={{mb: 15}}>
+      {conversationPairs.map((pair, pairIndex) => {
+        const isLastUser = pair.userIndex === lastUserIndex;
         const showFullAd = currentAd && isLastUser;
+        const isLastPair = pairIndex === conversationPairs.length - 1;
+
         return (
-          <Box key={index}>
+          <Box
+            key={pair.userIndex}
+            sx={{
+              minHeight: isLastUser ? '100vh' : 'auto',
+              display: 'flex',
+              flexDirection: 'column'
+            }}
+            ref={isLastUser ? latestQuestionRef : undefined}
+          >
+            {/* User question */}
             <ConversationHistoryItem
-              {...item}
+              {...pair.userMessage}
             />
+
             {/* Render ad right after user message */}
-            {item.role === 'user' && item.ad && (
+            {pair.userMessage.ad && (
               <>
                 {showFullAd ? (
                   <>
                     <AdvertisementCard
-                      ad={item.ad}
+                      ad={pair.userMessage.ad}
                       onAdImpression={onAdImpression}
                       onAdClick={onAdClick}
                     />
-                    <Box sx={{ textAlign: 'left', mt: 2 }}>
+                    <Box sx={{ textAlign: 'left', mt: 4 }}>
                       <AnimatedThinkingText>
                         Thinking...
                       </AnimatedThinkingText>
                     </Box>
                   </>
                 ) : (
-                  <FoldedAdvertisementCard ad={item.ad} onAdClick={onAdClick} />
+                  <FoldedAdvertisementCard ad={pair.userMessage.ad} onAdClick={onAdClick} />
                 )}
               </>
+            )}
+
+            {/* Assistant response */}
+            {pair.assistantMessage && (
+              <ConversationHistoryItem
+                {...pair.assistantMessage}
+              />
+            )}
+
+            {/* Show streaming content if this is the last pair and we're streaming */}
+            {isLastPair && streamingContent && (
+              <StyledAssistantPaper elevation={2}>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {streamingContent}
+                </ReactMarkdown>
+              </StyledAssistantPaper>
             )}
           </Box>
         );
       })}
-      {streamingContent && (
-        <StyledAssistantPaper elevation={2}>
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-            {streamingContent}
-          </ReactMarkdown>
-        </StyledAssistantPaper>
-      )}
     </Box>
   );
 }
-

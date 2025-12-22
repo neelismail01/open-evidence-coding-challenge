@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Box, Container } from '@mui/material';
+import { Box, Container, Button, Stack } from '@mui/material';
 
 import ChatSidebar from '../components/ChatSidebar';
 import ConversationHistory from '../components/ConversationHistory';
@@ -33,6 +33,13 @@ interface Ad {
   bid: number;
 }
 
+const RECOMMENDED_QUESTIONS = [
+  "How do I treat a patient that is experiencing postoperative pain?",
+  "How do I help a patient lose weight?",
+  "What are the challenges a patient can experience after an organ transplant?",
+  "What are pain management strategies I can offer to a patient during chemotherapy?",
+];
+
 export default function PhysicianHome() {
   const [question, setQuestion] = useState<string>('');
   const [history, setHistory] = useState<HistoryItem[]>([]);
@@ -43,12 +50,7 @@ export default function PhysicianHome() {
   const [questionHistory, setQuestionHistory] = useState<HistoryItem[]>([]);
 
   const chatHistoryRef = useRef<HTMLDivElement>(null);
-
-  const scrollToBottom = () => {
-    if (chatHistoryRef.current) {
-      chatHistoryRef.current.scrollTop = chatHistoryRef.current.scrollHeight;
-    }
-  };
+  const latestQuestionRef = useRef<HTMLDivElement>(null);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -196,12 +198,47 @@ export default function PhysicianHome() {
 
   const handleNewConversation = () => {
     clearConversation();
-    scrollToBottom();
   };
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [loading, history, ad, streamingContent]);
+  const handleRecommendedQuestionClick = async (selectedQuestion: string) => {
+    setQuestion(selectedQuestion);
+    setLoading(true);
+    setAd(null);
+    setStreamingContent('');
+
+    const historyToUse = history;
+    const newHistory = [...history, { role: 'user', content: selectedQuestion }];
+
+    setHistory(newHistory);
+    setCurrentQuestion(selectedQuestion);
+    setQuestionHistory(historyToUse);
+    setQuestion('');
+
+    try {
+      const adPromise = axios.post('/api/advertisement', { question: selectedQuestion });
+
+      const [adResponse] = await Promise.all([adPromise]);
+      const fetchedAd = adResponse.data;
+      setAd(fetchedAd);
+
+      // Add the ad to the last user message in history
+      setHistory(prev => {
+        const newHistory = [...prev];
+        if (newHistory.length > 0) {
+          newHistory[newHistory.length - 1] = {
+            ...newHistory[newHistory.length - 1],
+            ad: fetchedAd
+          };
+        }
+        return newHistory;
+      });
+
+    } catch (error) {
+      console.error('Error fetching the answer:', error);
+      setLoading(false);
+    }
+  };
+
 
   if (ad || history.length > 0) {
     return (
@@ -223,6 +260,7 @@ export default function PhysicianHome() {
               onAdClick={handleAdClick}
               onAdImpression={handleAdImpression}
               currentAd={ad}
+              latestQuestionRef={latestQuestionRef}
             />
           </Container>
           <Container maxWidth="md" sx={{ marginBottom: '20px' }}>
@@ -274,6 +312,32 @@ export default function PhysicianHome() {
             handleSubmit={handleSubmit}
             loading={loading}
           />
+          <Box sx={{ mt: 2 }}>
+            <Stack spacing={1}>
+              {RECOMMENDED_QUESTIONS.slice(0, 4).map((q, index) => (
+                <Button
+                  key={index}
+                  variant="text"
+                  onClick={() => handleRecommendedQuestionClick(q)}
+                  sx={{
+                    textTransform: 'none',
+                    justifyContent: 'flex-start',
+                    textAlign: 'left',
+                    padding: '6px 24px',
+                    borderRadius: 0,
+                    color: 'rgba(255, 255, 255, 0.7)',
+                    borderBottom: '1px solid rgba(128, 128, 128, 0.3)',
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                      borderBottom: '1px solid rgba(128, 128, 128, 0.3)'
+                    }
+                  }}
+                >
+                  {q}
+                </Button>
+              ))}
+            </Stack>
+          </Box>
         </Container>
       </Box>
     </Box>

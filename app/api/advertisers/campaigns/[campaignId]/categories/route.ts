@@ -188,8 +188,7 @@ export async function GET(
     const { data: allCampaignCategoriesData, error: allCampaignCategoriesError } = await getRowsFromTable<CampaignCategory>(
       SUPABASE_TABLE_NAME_CAMPAIGN_CATEGORIES,
       {
-        inFilters: { advertising_category_id: advertisingCategoryIds },
-        filters: { active: true },
+        inFilters: { advertising_category_id: advertisingCategoryIds }
       }
     );
 
