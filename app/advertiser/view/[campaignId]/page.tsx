@@ -84,7 +84,7 @@ export default function ViewCampaignPage({ params }: { params: { campaignId: str
         try {
             setCategoriesLoading(true);
 
-            // Fetch categories
+            // Fetch categories with max bid data
             const categoriesResponse = await axios.get(`/api/advertisers/campaigns/${campaignId}/categories`);
             const categories = categoriesResponse.data.categories;
 

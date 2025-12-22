@@ -22,16 +22,16 @@ const StyledBox = styled(Box)({
   height: '100vh',
   alignItems: 'center',
   justifyContent: 'space-between',
-  width: '50px',
+  width: '60px',
   borderRight: '0.1px solid #3b3b3b',
 });
 
 const StyledNewChatIconButton = styled(IconButton)({
   padding: '4px',
   backgroundColor: '#d45b15',
-  height: '25px',
-  width: '25px',
-  borderRadius: '12.5px',
+  height: '30px',
+  width: '30px',
+  borderRadius: '15px',
   color: 'white',
   marginTop: '20px',
   '&:hover': {
@@ -91,7 +91,7 @@ export default function ChatSidebar({ handleNewConversation, handleLogout, toolt
         aria-haspopup="true"
         aria-expanded={open ? 'true' : undefined}
       >
-        <MenuIcon style={{ fontSize: '20px' }} />
+        <MenuIcon style={{ fontSize: '26px' }} />
       </StyledMenuIconButton>
       <Menu
         id="basic-menu"

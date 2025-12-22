@@ -257,7 +257,7 @@ function CampaignDetailsForm({
                         label={
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <Typography sx={{ color: 'white' }}>
-                                    Active Campaign
+                                    {isActive ? "Campaign Active" : "Campaign Paused"}
                                 </Typography>
                             </Box>
                         }
@@ -821,7 +821,7 @@ export default function EditCampaignPage({ params }: { params: { campaignId: str
                 setOriginalDescription(campaignData.description);
                 setOriginalProductUrl(campaignData.product_url || '');
 
-                // Fetch associated categories
+                // Fetch associated categories with max bid data
                 const categoriesResponse = await axios.get(`/api/advertisers/campaigns/${params.campaignId}/categories`);
                 console.log("categoriesResponse=",categoriesResponse)
                 const sortedCategories = categoriesResponse.data.categories.sort((a: CategoryBid, b: CategoryBid) => {
